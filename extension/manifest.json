@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "ALM Screensaver",
+  "version": "0.4.1",
+  "description": "Opens the ALM ambient log monitor fullscreen when the machine goes idle, and keeps the display awake while it runs.",
+  "permissions": ["idle", "power", "storage"],
+  "background": { "service_worker": "background.js" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "externally_connectable": { "matches": ["http://127.0.0.1/*", "http://localhost/*"] },
+  "action": { "default_title": "ALM Screensaver" }
+}

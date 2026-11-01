@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ALM Screensaver</title>
+<style>
+  body{ font:14px system-ui,sans-serif; background:#0a0d10; color:#dbe2e8; max-width:520px; margin:48px auto; padding:0 20px; }
+  h1{ font-size:15px; letter-spacing:.14em; text-transform:uppercase; color:#5c6670; font-weight:500; }
+  label{ display:block; margin:18px 0 6px; color:#8d98a3; font-size:12px; }
+  input[type=text],input[type=password],input[type=number]{ width:100%; padding:8px 10px; background:#10151a; color:inherit;
+    border:1px solid #2a323a; border-radius:6px; font:inherit; box-sizing:border-box; }
+  .row{ display:flex; gap:10px; margin-top:22px; align-items:center; }
+  button{ background:transparent; color:inherit; border:1px solid #39424b; border-radius:100px; padding:7px 16px; cursor:pointer; font:inherit; }
+  button:hover{ border-color:#6fb8c9; }
+  #status,#lock{ color:#8d98a3; font-size:12px; margin-top:14px; }
+  .warn{ color:#d9a54c !important; }
+</style>
+</head>
+<body>
+<h1>ALM Screensaver <span id="ver" style="opacity:.6"></span></h1>
+<label style="margin-top:8px"><input type="checkbox" id="enabled"> Enabled <span style="opacity:.7">(applies at once; the toolbar button toggles it too, handy while watching something)</span></label>
+<label for="url">ALM address</label>
+<input type="text" id="url" placeholder="http://127.0.0.1:8000">
+<label for="token">Token (optional, matches --token on the server)</label>
+<input type="password" id="token">
+<label for="timeoutSec">Start after idle for (seconds, minimum 15)</label>
+<input type="number" id="timeoutSec" min="15" step="5">
+<div id="lock"></div>
+<div class="row">
+  <button id="save">Save</button>
+  <button id="test">Test now</button>
+  <button id="stop">Stop</button>
+</div>
+<div id="status"></div>
+<h1 style="margin-top:34px">Recent activity</h1>
+<div id="log" style="font:12px ui-monospace,monospace;color:#8d98a3;white-space:pre-wrap;line-height:1.5"></div>
+<div class="row"><button id="refresh">Refresh</button><button id="clear">Clear</button></div>
+<script src="options.js"></script>
+</body>
+</html>

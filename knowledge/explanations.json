@@ -1,0 +1,1667 @@
+[
+ {
+  "sig": "50-motd-news|* Canonical Workshop gives developers fast, composable, reproducible, and",
+  "source": "50-motd-news",
+  "category": "System",
+  "title": "Message of the day refresh",
+  "what": "systemd refreshed the login banner text (motd-news), which can include Canonical announcements.",
+  "why": "It runs on a timer. The 'Canonical Workshop' lines are the banner content that was fetched, not an alert.",
+  "by": "claude"
+ },
+ {
+  "sig": "50-motd-news|https://ubuntu.com/workshop",
+  "source": "50-motd-news",
+  "category": "System",
+  "title": "Message of the day refresh",
+  "what": "systemd refreshed the login banner text (motd-news), which can include Canonical announcements.",
+  "why": "It runs on a timer. The 'Canonical Workshop' lines are the banner content that was fetched, not an alert.",
+  "by": "claude"
+ },
+ {
+  "sig": "50-motd-news|secure developer environments that are perfect for agentic workflows.",
+  "source": "50-motd-news",
+  "category": "System",
+  "title": "Message of the day refresh",
+  "what": "systemd refreshed the login banner text (motd-news), which can include Canonical announcements.",
+  "why": "It runs on a timer. The 'Canonical Workshop' lines are the banner content that was fetched, not an alert.",
+  "by": "claude"
+ },
+ {
+  "sig": "CRON|(root) CMD ( cd / && run-parts --report /etc/cron.hourly)",
+  "source": "CRON",
+  "category": "Scheduler",
+  "title": "Hourly maintenance run",
+  "what": "Cron ran the standard set of hourly maintenance scripts.",
+  "why": "Ubuntu schedules these out of the box.",
+  "by": "claude"
+ },
+ {
+  "sig": "CRON|(root) CMD (test -e /run/systemd/system || SERVICE_MODE=<n> /sbin/e2scrub_all -A -r)",
+  "source": "CRON",
+  "category": "Scheduler",
+  "title": "Filesystem metadata check",
+  "what": "Cron started e2scrub, which checks ext4 filesystem metadata.",
+  "why": "A routine background health check that ships with the system.",
+  "by": "claude"
+ },
+ {
+  "sig": "CRON|(root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily ))",
+  "source": "CRON",
+  "category": "Scheduler",
+  "title": "Daily maintenance run",
+  "what": "Cron ran the standard daily maintenance scripts through anacron.",
+  "why": "Ubuntu schedules these out of the box. Housekeeping such as log rotation hangs off them.",
+  "by": "claude"
+ },
+ {
+  "sig": "CRON|pam_unix(cron:session): session closed for user <user>",
+  "source": "CRON",
+  "category": "Scheduler",
+  "title": "Cron job finished",
+  "what": "A scheduled job for {user} finished.",
+  "why": "The closing half of a cron session.",
+  "by": "claude"
+ },
+ {
+  "sig": "CRON|pam_unix(cron:session): session opened for user <user> by (uid=<n>)",
+  "source": "CRON",
+  "category": "Scheduler",
+  "title": "Cron job started",
+  "what": "Cron started a scheduled job as {user}.",
+  "why": "Cron opens a short login session for each job. It pairs with a 'closed' line when the job finishes.",
+  "by": "claude"
+ },
+ {
+  "sig": "alm|<ip> hit us <n> in <n> (f2b:sshd+sshd)",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Burst from one address",
+  "what": "{ip} produced {n} suspicious events inside a short window, which is what ALM's burst detector watches for.",
+  "why": "A single address hitting the firewall, sshd or fail2ban many times in a minute is a scan or a brute-force run. ALM raises this one error instead of letting the individual lines bury it.",
+  "by": "claude"
+ },
+ {
+  "sig": "alm|<ip> hit us <n> in <n> (ufw)",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Burst from one address",
+  "what": "{ip} produced {n} suspicious events inside a short window, which is what ALM's burst detector watches for.",
+  "why": "A single address hitting the firewall, sshd or fail2ban many times in a minute is a scan or a brute-force run. ALM raises this one error instead of letting the individual lines bury it.",
+  "by": "claude"
+ },
+ {
+  "sig": "alm|lost myserver journal, retrying",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Lost the link to myserver",
+  "what": "ALM's connection to myserver dropped, and it is retrying with growing delays up to a minute.",
+  "why": "ALM reads myserver's logs over ssh. The link drops when myserver or the network goes down, or when this machine wakes from sleep. Entries missed during the gap are backfilled from the journal.",
+  "by": "claude"
+ },
+ {
+  "sig": "alm|lost myserver:/var/log/caddy/access.log, retrying",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Lost the link to myserver",
+  "what": "ALM's connection to myserver dropped, and it is retrying with growing delays up to a minute.",
+  "why": "ALM reads myserver's logs over ssh. The link drops when myserver or the network goes down, or when this machine wakes from sleep. Entries missed during the gap are backfilled from the journal.",
+  "by": "claude"
+ },
+ {
+  "sig": "alm|lost myserver:/var/log/fail2ban.log, retrying",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Lost the link to myserver",
+  "what": "ALM's connection to myserver dropped, and it is retrying with growing delays up to a minute.",
+  "why": "ALM reads myserver's logs over ssh. The link drops when myserver or the network goes down, or when this machine wakes from sleep. Entries missed during the gap are backfilled from the journal.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> loaded <path> from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Asset load",
+  "what": "{who} fetched {path} (a font, image or script that a page needs) from {ip}.",
+  "why": "The browser loads these after a page view. ALM normally folds them into the view, so seeing one alone is unusual.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> probed <path> (308) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Probe redirected",
+  "what": "{who} asked for {path}, a path scanners look for, and Caddy answered with a redirect (HTTP {status}) instead of the page.",
+  "why": "A 308 here is most likely the plain-http to https redirect, so the probe never reached an application. Many probes from one address is a scan, and ALM flags it.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> probed <path> (403) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Probe for a missing path",
+  "what": "{who} requested {path} and got HTTP {status}. The path does not exist or is not allowed.",
+  "why": "Scanners look for well-known paths such as /.env, /wp-login.php and /admin. Each 404 is a miss. Many from one address is a scan, and ALM flags it.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> probed <path> (404) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Probe for a missing path",
+  "what": "{who} requested {path} and got HTTP {status}. The path does not exist or is not allowed.",
+  "why": "Scanners look for well-known paths such as /.env, /wp-login.php and /admin. Each 404 is a miss. Many from one address is a scan, and ALM flags it.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> requested <path> (400) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Malformed request",
+  "what": "{who} sent a request for {path} that Caddy rejected as malformed (HTTP {status}).",
+  "why": "Usually a scanner or a broken client. Clients with no User-Agent are often scripts.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> requested <path> (404) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Probe for a missing path",
+  "what": "{who} requested {path} and got HTTP {status}. The path does not exist or is not allowed.",
+  "why": "Scanners look for well-known paths such as /.env, /wp-login.php and /admin. Each 404 is a miss. Many from one address is a scan, and ALM flags it.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent CONNECT to <path> (308) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "CONNECT request redirected",
+  "what": "{who} sent a CONNECT request for {path}, which is how a client asks a server to act as a proxy. Caddy redirected it (HTTP {status}).",
+  "why": "Open-proxy scanners send CONNECT to every web server they find. Caddy does not proxy for strangers, so nothing was relayed.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent POST to <path> (308) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "POST redirected",
+  "what": "{who} sent a POST to {path} and Caddy redirected it (HTTP {status}).",
+  "why": "Bots POST to login and form endpoints. A redirect means the request was bounced before reaching any app.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> viewed <path> from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Page view",
+  "what": "{who} loaded the page {path} from {ip}.",
+  "why": "Caddy, the web server, logs every request. ALM turns each line into a sentence and folds the fonts and images that follow a page view into that one view.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> was redirected at <path> (308) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Redirect",
+  "what": "{who} asked for {path} and Caddy sent it somewhere else (HTTP {status}).",
+  "why": "A 308 is a permanent redirect, such as adding a trailing slash or moving from http to https. Normal.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|GET <path> -> <status> <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Access log line (older format)",
+  "what": "An older-format access log line: a request for {path} from {ip}, answered with HTTP {status}.",
+  "why": "ALM used to show Caddy lines like this before it learned to write them as sentences.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|[WARNING] listen tcp :<n>: bind: address already in use - be sure to set the ACMEIssuer.ListenHost field; assum",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Caddy could not bind port 80 for its own challenge",
+  "what": "Caddy warned that port 80 is already in use while it tried to answer a certificate challenge, and carried on assuming the other listener handles it.",
+  "why": "Expected when Caddy itself already serves port 80. The challenge was answered anyway, so the renewal succeeded.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http.acme_client: authorization finalized",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http.acme_client: got renewal info",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal info checked",
+  "what": "Caddy asked the certificate authority when {subject}'s certificate should be renewed and stored the answer.",
+  "why": "Caddy manages HTTPS certificates itself and checks the renewal window (ACME ARI) in the background. This is routine upkeep.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http.acme_client: successfully downloaded available certificate chains",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http.acme_client: trying to solve challenge",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http.acme_client: validations succeeded; finalizing order",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http.log.access: NOP",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Access log line with no body",
+  "what": "Caddy logged a request from {subject} with the note 'NOP'.",
+  "why": "A rare internal marker for a request that had nothing to log. Harmless.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http: done waiting on internal rate limiter",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http: served key authentication",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http: using ACME account",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|http: waiting on internal rate limiter",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|raw access-log JSON",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Raw access-log JSON",
+  "what": "An access-log line stored as raw JSON, from before ALM turned Caddy lines into sentences.",
+  "why": "The full request is in the text: client address, path, status and headers.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|reverse_proxy: aborting with incomplete response",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Upstream app cut a response short",
+  "what": "The app behind Caddy dropped a response before it finished, so Caddy aborted it ({subject}).",
+  "why": "Usually the visitor left mid-response, or the app crashed or restarted. Scanners requesting odd paths trigger it often. A burst of these for real pages would point at the app.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.cache.maintenance: attempting certificate renewal",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.cache.maintenance: certificate expires soon; queuing for renewal",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.cache.maintenance: updated and stored ACME renewal information",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal info checked",
+  "what": "Caddy asked the certificate authority when {subject}'s certificate should be renewed and stored the answer.",
+  "why": "Caddy manages HTTPS certificates itself and checks the renewal window (ACME ARI) in the background. This is routine upkeep.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.cache: replaced certificate in cache",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.on_demand: updated and stored ACME renewal information",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal info checked",
+  "what": "Caddy asked the certificate authority when {subject}'s certificate should be renewed and stored the answer.",
+  "why": "Caddy manages HTTPS certificates itself and checks the renewal window (ACME ARI) in the background. This is routine upkeep.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.renew: acquiring lock",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.renew: certificate renewed successfully",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.renew: lock acquired",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.renew: releasing lock",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls.renew: renewing certificate",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls: certificate needs renewal based on ARI window",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls: cleaning storage unit",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate store housekeeping",
+  "what": "Caddy tidied its certificate storage.",
+  "why": "A periodic background job. 'Too recently; skipping' just means it ran not long ago.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls: finished cleaning storage units",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate store housekeeping",
+  "what": "Caddy tidied its certificate storage.",
+  "why": "A periodic background job. 'Too recently; skipping' just means it ran not long ago.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls: reloading managed certificate",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate renewal in progress",
+  "what": "Caddy is renewing the HTTPS certificate for {subject}. This line is one step of the renewal.",
+  "why": "Renewal runs as a sequence: lock, ask the authority, prove control of the domain, download, swap in the new certificate, unlock. If it stops partway and an error follows, HTTPS for that name may break in time.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|tls: storage cleaning happened too recently; skipping for now",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Certificate store housekeeping",
+  "what": "Caddy tidied its certificate storage.",
+  "why": "A periodic background job. 'Too recently; skipping' just means it ran not long ago.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|dismissed by Escape",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Screensaver dismissed",
+  "what": "The screensaver was closed on the desk machine.",
+  "why": "Recorded for the timeline so a replay shows when the machine was put to use again.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|dismissed by edge swipe from bottom (touch)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Screensaver dismissed",
+  "what": "The screensaver was closed on the desk machine.",
+  "why": "Recorded for the timeline so a replay shows when the machine was put to use again.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|dismissed by edge swipe from left (touch)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Screensaver dismissed",
+  "what": "The screensaver was closed on the desk machine.",
+  "why": "Recorded for the timeline so a replay shows when the machine was put to use again.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|dismissed by edge swipe from right (touch)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Screensaver dismissed",
+  "what": "The screensaver was closed on the desk machine.",
+  "why": "Recorded for the timeline so a replay shows when the machine was put to use again.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|dismissed by edge swipe from top (touch)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Screensaver dismissed",
+  "what": "The screensaver was closed on the desk machine.",
+  "why": "Recorded for the timeline so a replay shows when the machine was put to use again.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|input after <n> quiet (key)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Input after a quiet spell",
+  "what": "Something touched the desk machine after {n} of quiet.",
+  "why": "This is the 'did anyone use it while I was away' record. ALM can say that something touched the saver and when, not who.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|input after <n> quiet (mouse)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Input after a quiet spell",
+  "what": "Something touched the desk machine after {n} of quiet.",
+  "why": "This is the 'did anyone use it while I was away' record. ALM can say that something touched the saver and when, not who.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|input after <n> quiet (touch)",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Input after a quiet spell",
+  "what": "Something touched the desk machine after {n} of quiet.",
+  "why": "This is the 'did anyone use it while I was away' record. ALM can say that something touched the saver and when, not who.",
+  "by": "claude"
+ },
+ {
+  "sig": "desk|screensaver opened",
+  "source": "desk",
+  "category": "Desk",
+  "title": "Screensaver opened",
+  "what": "The ALM screensaver window opened on the desk machine.",
+  "why": "Desk events are recorded for the timeline only, never shown live, so you can ask afterwards whether anyone touched the machine while you were away.",
+  "by": "claude"
+ },
+ {
+  "sig": "f2b:sshd|ban <ip>",
+  "source": "f2b:sshd",
+  "category": "Fail2ban",
+  "title": "{ip} banned",
+  "what": "Fail2ban banned {ip}: its firewall rule now drops everything from that address.",
+  "why": "{ip} crossed the failure threshold. The ban lasts for the jail's ban time, then lifts (you will see an 'unban' line).",
+  "by": "claude"
+ },
+ {
+  "sig": "f2b:sshd|found <ip>",
+  "source": "f2b:sshd",
+  "category": "Fail2ban",
+  "title": "Failed login counted against {ip}",
+  "what": "Fail2ban saw a failed SSH login from {ip} and added it to that address's tally.",
+  "why": "Fail2ban reads the SSH log and counts failures per address. Enough inside its time window and the address is banned.",
+  "by": "claude"
+ },
+ {
+  "sig": "f2b:sshd|restore ban <ip>",
+  "source": "f2b:sshd",
+  "category": "Fail2ban",
+  "title": "Ban restored for {ip}",
+  "what": "Fail2ban started up and put the existing ban on {ip} back in the firewall.",
+  "why": "Bans live in fail2ban's own database so they survive a restart. This follows a fail2ban restart.",
+  "by": "claude"
+ },
+ {
+  "sig": "f2b:sshd|unban <ip>",
+  "source": "f2b:sshd",
+  "category": "Fail2ban",
+  "title": "{ip} unbanned",
+  "what": "The ban on {ip} expired and fail2ban removed its firewall rule.",
+  "why": "Bans are temporary by design. If the address misbehaves again it will be banned again.",
+  "by": "claude"
+ },
+ {
+  "sig": "fail2ban-client|Shutdown successful",
+  "source": "fail2ban-client",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "fail2ban-server|Server ready",
+  "source": "fail2ban-server",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "kernel|[UFW LIMIT BLOCK] IN=ens3 OUT= MAC=<mac>:<mac>:<n>:<n> SRC=<ip> DST=<ip> LEN=<n> TOS=<hex> PREC=<hex> TTL=<n> ID=<n> DF PROTO=TCP SPT=<n> DPT=<n> WINDOW=<n> RES",
+  "source": "kernel",
+  "category": "Firewall",
+  "title": "Rate-limited connection refused",
+  "what": "UFW's limit rule refused a connection because the same address opened too many new connections in a short time.",
+  "why": "The limit rule on SSH slows down password-guessing bots before they reach sshd. It is the firewall's own brake, separate from fail2ban's bans.",
+  "by": "claude"
+ },
+ {
+  "sig": "qemu-ga|info: guest-fsfreeze called",
+  "source": "qemu-ga",
+  "category": "System",
+  "title": "Filesystem freeze for a snapshot",
+  "what": "The hypervisor's guest agent asked this virtual machine to briefly freeze its filesystem.",
+  "why": "That is how a host takes a consistent snapshot or backup of a VM. It lasts a moment.",
+  "by": "claude"
+ },
+ {
+  "sig": "snapd|cache.go:<n>: removed <n> entries/ <n> from downloads cache",
+  "source": "snapd",
+  "category": "System",
+  "title": "Snap housekeeping",
+  "what": "snapd, the Snap package service, ran a routine check or cleanup of its download cache.",
+  "why": "snapd does this on its own schedule. 'No updates available' is the quiet good outcome.",
+  "by": "claude"
+ },
+ {
+  "sig": "snapd|snapmgr.go:<n>: performing periodic snap downloads cache cleanup",
+  "source": "snapd",
+  "category": "System",
+  "title": "Snap housekeeping",
+  "what": "snapd, the Snap package service, ran a routine check or cleanup of its download cache.",
+  "why": "snapd does this on its own schedule. 'No updates available' is the quiet good outcome.",
+  "by": "claude"
+ },
+ {
+  "sig": "snapd|storehelpers.go:<n>: cannot refresh: snap has no updates available: \"core20\", \"core22\", \"lxd\", \"snapd\"",
+  "source": "snapd",
+  "category": "System",
+  "title": "Snap housekeeping",
+  "what": "snapd, the Snap package service, ran a routine check or cleanup of its download cache.",
+  "why": "snapd does this on its own schedule. 'No updates available' is the quiet good outcome.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Accepted publickey for <user> from <ip> port <n> ssh2: RSA SHA256:<key>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Real login",
+  "what": "{user} logged in over SSH from {ip}, authenticating with a key.",
+  "why": "This is somebody or something actually getting in. Worth a glance if you do not recognise the address. ALM's own follower logs in this way to read myserver's logs, so many of these are ALM itself.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection closed by <ip> port <n>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Connection opened and closed without a login",
+  "what": "{ip} opened an SSH connection and closed it without trying to log in.",
+  "why": "Port scans and banner grabbing look like this. It is noise, not an attack in progress.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection closed by <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Connection opened and closed without a login",
+  "what": "{ip} opened an SSH connection and closed it without trying to log in.",
+  "why": "Port scans and banner grabbing look like this. It is noise, not an attack in progress.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection closed by authenticating user <user> <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt dropped before it finished",
+  "what": "{ip} connected to SSH, offered the username '{user}', and hung up before logging in.",
+  "why": "This is the shape of a password-guessing bot: connect, try a name, drop, repeat. 'preauth' means nothing got in.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection closed by invalid user <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt with an empty username",
+  "what": "{ip} tried to log in without giving a username.",
+  "why": "Scanners and half-broken clients do this. It cannot succeed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection closed by invalid user <user> <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt as an account that does not exist",
+  "what": "{ip} tried to log in as '{user}', which is not an account on this machine.",
+  "why": "Bots cycle through common names such as admin, test and ubuntu. The attempt fails by definition. Many of these from one address will get it banned by fail2ban.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection reset by <ip> port <n>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Connection opened and closed without a login",
+  "what": "{ip} opened an SSH connection and closed it without trying to log in.",
+  "why": "Port scans and banner grabbing look like this. It is noise, not an attack in progress.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection reset by <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Connection opened and closed without a login",
+  "what": "{ip} opened an SSH connection and closed it without trying to log in.",
+  "why": "Port scans and banner grabbing look like this. It is noise, not an attack in progress.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection reset by authenticating user <user> <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt dropped before it finished",
+  "what": "{ip} connected to SSH, offered the username '{user}', and hung up before logging in.",
+  "why": "This is the shape of a password-guessing bot: connect, try a name, drop, repeat. 'preauth' means nothing got in.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Connection reset by invalid user <user> <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt as an account that does not exist",
+  "what": "{ip} tried to log in as '{user}', which is not an account on this machine.",
+  "why": "Bots cycle through common names such as admin, test and ubuntu. The attempt fails by definition. Many of these from one address will get it banned by fail2ban.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Disconnected from <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Scanner said goodbye",
+  "what": "{ip} ended its SSH connection before logging in.",
+  "why": "Usually the last line of a scanner's visit: it checked that SSH is there and left. Harmless on its own.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Disconnected from authenticating user <user> <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt dropped before it finished",
+  "what": "{ip} connected to SSH, offered the username '{user}', and hung up before logging in.",
+  "why": "This is the shape of a password-guessing bot: connect, try a name, drop, repeat. 'preauth' means nothing got in.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Disconnected from invalid user <user> <ip> port <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt as an account that does not exist",
+  "what": "{ip} tried to log in as '{user}', which is not an account on this machine.",
+  "why": "Bots cycle through common names such as admin, test and ubuntu. The attempt fails by definition. Many of these from one address will get it banned by fail2ban.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Disconnected from user <user> <ip> port <n>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Logged-in user disconnected",
+  "what": "{user}, a real logged-in account, disconnected from {ip}.",
+  "why": "The normal end of a legitimate session.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Disconnecting invalid user <user> <ip> port <n>: Too many authentication failures [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Too many failed logins",
+  "what": "{ip} used up its allowed login attempts as '{user}' and was cut off.",
+  "why": "Classic brute force. sshd limits attempts per connection, and fail2ban counts the failures toward a ban.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Invalid user <user> from <ip> port <n>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt as an account that does not exist",
+  "what": "{ip} tried to log in as '{user}', which is not an account on this machine.",
+  "why": "Bots cycle through common names such as admin, test and ubuntu. The attempt fails by definition. Many of these from one address will get it banned by fail2ban.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Invalid user from <ip> port <n>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login attempt with an empty username",
+  "what": "{ip} tried to log in without giving a username.",
+  "why": "Scanners and half-broken clients do this. It cannot succeed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Received SIGHUP; restarting.",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "SSH server restarted or reloaded",
+  "what": "The SSH server reloaded its configuration and began listening again.",
+  "why": "It follows an admin changing sshd settings, such as the hardening drop-in, and running a reload.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Received disconnect from <ip> port <n>:<n>: Bye Bye [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Scanner said goodbye",
+  "what": "{ip} ended its SSH connection before logging in.",
+  "why": "Usually the last line of a scanner's visit: it checked that SSH is there and left. Harmless on its own.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Received disconnect from <ip> port <n>:<n>: disconnected by user",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Logged-in user disconnected",
+  "what": "{user}, a real logged-in account, disconnected from {ip}.",
+  "why": "The normal end of a legitimate session.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Server listening on :: port <n>.",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "SSH server restarted or reloaded",
+  "what": "The SSH server reloaded its configuration and began listening again.",
+  "why": "It follows an admin changing sshd settings, such as the hardening drop-in, and running a reload.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Server listening on <ip> port <n>.",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "SSH server restarted or reloaded",
+  "what": "The SSH server reloaded its configuration and began listening again.",
+  "why": "It follows an admin changing sshd settings, such as the hardening drop-in, and running a reload.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Unable to negotiate with <ip> port <n>: no matching host key type found. Their offer: ssh-rsa [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Old SSH client rejected",
+  "what": "{ip} offered only legacy host key types that this server no longer accepts.",
+  "why": "SSH hardening disables weak algorithms (ssh-rsa, ssh-dss). Ancient clients and some scanners get turned away here.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|Unable to negotiate with <ip> port <n>: no matching host key type found. Their offer: ssh-rsa,ssh-dss [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Old SSH client rejected",
+  "what": "{ip} offered only legacy host key types that this server no longer accepts.",
+  "why": "SSH hardening disables weak algorithms (ssh-rsa, ssh-dss). Ancient clients and some scanners get turned away here.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|User root from <ip> not allowed because not listed in AllowUsers",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Root login refused",
+  "what": "{ip} tried to log in as root, and sshd turned it away because only accounts in AllowUsers may log in.",
+  "why": "Root is the most common brute-force target. The AllowUsers setting is what stops it before any password is tried.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|banner exchange: Connection from <ip> port <n>: could not read protocol version",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|banner exchange: Connection from <ip> port <n>: invalid format",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: Protocol major versions differ: <n> vs. <n>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: Connection closed by remote host",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Connection opened and closed without a login",
+  "what": "{ip} opened an SSH connection and closed it without trying to log in.",
+  "why": "Port scans and banner grabbing look like this. It is noise, not an attack in progress.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: banner line contains invalid characters",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: client sent invalid protocol identifier \"\"",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: client sent invalid protocol identifier \"GET / HTTP/<n>\"",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: client sent invalid protocol identifier \"GET /favicon.ico HTTP/<n>\"",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: client sent invalid protocol identifier \"LEAKIX\"",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Client spoke something other than SSH",
+  "what": "A client connected to the SSH port but did not send an SSH greeting, so sshd gave up on it.",
+  "why": "Web crawlers and internet scanners send HTTP requests or their own tag (the quoted text is often the scanner's name) to every port. Nothing was exposed.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: kex_exchange_identification: read: Connection reset by peer",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Connection opened and closed without a login",
+  "what": "{ip} opened an SSH connection and closed it without trying to log in.",
+  "why": "Port scans and banner grabbing look like this. It is noise, not an attack in progress.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|error: maximum authentication attempts exceeded for invalid user <user> from <ip> port <n> ssh2 [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Too many failed logins",
+  "what": "{ip} used up its allowed login attempts as '{user}' and was cut off.",
+  "why": "Classic brute force. sshd limits attempts per connection, and fail2ban counts the failures toward a ban.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|padding error: need <n> block <n> mod <n> [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Garbled SSH data",
+  "what": "sshd received a packet from {ip} that did not check out (bad padding or a failed integrity check) and dropped the connection.",
+  "why": "A broken client, a scanner sending junk, or a connection tampered with in transit. Isolated ones are noise.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|pam_unix(sshd:session): session closed for user <user>",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login session closed",
+  "what": "The login session for {user} ended.",
+  "why": "The other half of a 'session opened' line. Nothing to act on.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|pam_unix(sshd:session): session opened for user <user> by (uid=<n>)",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Login session opened",
+  "what": "A login session for {user} began.",
+  "why": "PAM records every session start and end, so this pairs with a 'closed' line later.",
+  "by": "claude"
+ },
+ {
+  "sig": "sshd|ssh_dispatch_run_fatal: Connection from <ip> port <n>: message authentication code incorrect [preauth]",
+  "source": "sshd",
+  "category": "SSH",
+  "title": "Garbled SSH data",
+  "what": "sshd received a packet from {ip} that did not check out (bad padding or a failed integrity check) and dropped the connection.",
+  "why": "A broken client, a scanner sending junk, or a connection tampered with in transit. Isolated ones are noise.",
+  "by": "claude"
+ },
+ {
+  "sig": "sudo|<user> ran a command as <as>",
+  "source": "sudo",
+  "category": "Admin",
+  "title": "Command run with sudo",
+  "what": "{user} ran `{cmd}` as {as}, from {pwd}.",
+  "why": "sudo logs every elevated command. If that was you, it is your audit trail. Commands that tail the Caddy or fail2ban logs come from ALM's follower.",
+  "by": "claude"
+ },
+ {
+  "sig": "sudo|pam_unix(sudo:session): session closed for user <user>",
+  "source": "sudo",
+  "category": "Admin",
+  "title": "sudo session closed",
+  "what": "The sudo session for {user} ended.",
+  "why": "The closing half of a sudo session.",
+  "by": "claude"
+ },
+ {
+  "sig": "sudo|pam_unix(sudo:session): session opened for user <user> by (uid=<n>)",
+  "source": "sudo",
+  "category": "Admin",
+  "title": "sudo session opened",
+  "what": "A sudo session for {user} started.",
+  "why": "sudo opens a short PAM session around each command.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Cleanup of Temporary Directories.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Daily apt download activities.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Daily apt upgrade and clean activities.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Daily dpkg database backup service.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Daily man-db regeneration.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Download data for packages that failed at package install time.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Message of the Day.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Message of the day refresh",
+  "what": "systemd refreshed the login banner text (motd-news), which can include Canonical announcements.",
+  "why": "It runs on a timer. The 'Canonical Workshop' lines are the banner content that was fetched, not an alert.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Rotate log files.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Update APT News.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Finished Update the local ESM caches.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Reloaded OpenBSD Secure Shell server.",
+  "source": "systemd",
+  "category": "SSH",
+  "title": "SSH server restarted or reloaded",
+  "what": "The SSH server reloaded its configuration and began listening again.",
+  "why": "It follows an admin changing sshd settings, such as the hardening drop-in, and running a reload.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Reloading OpenBSD Secure Shell server...",
+  "source": "systemd",
+  "category": "SSH",
+  "title": "SSH server restarted or reloaded",
+  "what": "The SSH server reloaded its configuration and began listening again.",
+  "why": "It follows an admin changing sshd settings, such as the hardening drop-in, and running a reload.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Started /usr/bin/tailscale update --yes.",
+  "source": "systemd",
+  "category": "Tailscale",
+  "title": "Tailscale self-update",
+  "what": "Tailscale checked for an update and ran its own updater.",
+  "why": "tailscaled keeps itself current when auto-update is on. These lines are the run and its result.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Started Fail2Ban Service.",
+  "source": "systemd",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Started Session <n> of User ubuntu.",
+  "source": "systemd",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Cleanup of Temporary Directories...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Daily apt download activities...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Daily apt upgrade and clean activities...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Daily dpkg database backup service...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Daily man-db regeneration...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Download data for packages that failed at package install time...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Message of the Day...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Message of the day refresh",
+  "what": "systemd refreshed the login banner text (motd-news), which can include Canonical announcements.",
+  "why": "It runs on a timer. The 'Canonical Workshop' lines are the banner content that was fetched, not an alert.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Rotate log files...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Update APT News...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Starting Update the local ESM caches...",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Stopped Fail2Ban Service.",
+  "source": "systemd",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|Stopping Fail2Ban Service...",
+  "source": "systemd",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|apt-daily-upgrade.service: Consumed <n> CPU time.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|apt-daily-upgrade.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|apt-daily.service: Consumed <n> CPU time.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|apt-daily.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|apt-news.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|dpkg-db-backup.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|esm-cache.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|fail2ban.service: Consumed <n> <n> CPU time.",
+  "source": "systemd",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|fail2ban.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "Fail2ban",
+  "title": "Fail2ban service lifecycle",
+  "what": "Fail2ban was stopped, started or reported its state.",
+  "why": "These appear when an admin restarts fail2ban to change its settings. Bans are restored afterwards.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|logrotate.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|man-db.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|motd-news.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Message of the day refresh",
+  "what": "systemd refreshed the login banner text (motd-news), which can include Canonical announcements.",
+  "why": "It runs on a timer. The 'Canonical Workshop' lines are the banner content that was fetched, not an alert.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|run-u<n>.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "Sessions",
+  "title": "One-off command unit finished",
+  "what": "A short-lived systemd unit created for a single command finished successfully.",
+  "why": "systemd-run makes these for one-shot jobs, such as tailscale's updater. Success is the expected result.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|session-<n>.scope: Consumed <n> <n> CPU time.",
+  "source": "systemd",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|session-<n>.scope: Consumed <n> CPU time.",
+  "source": "systemd",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|session-<n>.scope: Deactivated successfully.",
+  "source": "systemd",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|systemd-tmpfiles-clean.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Routine housekeeping job",
+  "what": "A scheduled system chore ran: temp-file cleanup, man-page index rebuild, dpkg database backup or log rotation.",
+  "why": "These keep the machine tidy and run on timers. A 'Finished' or 'Deactivated successfully' line means it went fine.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd|update-notifier-download.service: Deactivated successfully.",
+  "source": "systemd",
+  "category": "System",
+  "title": "Daily package maintenance",
+  "what": "systemd ran one of Ubuntu's scheduled package housekeeping jobs (apt downloads, upgrades, news, ESM cache, update-notifier).",
+  "why": "Ubuntu runs these daily from systemd timers. Starting, finishing and CPU-time lines belong to one run.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd-logind|New session <n> of user <user>",
+  "source": "systemd-logind",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd-logind|Removed session <n>.",
+  "source": "systemd-logind",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "systemd-logind|Session <n> logged out. Waiting for processes to exit.",
+  "source": "systemd-logind",
+  "category": "Sessions",
+  "title": "Login session bookkeeping",
+  "what": "systemd recorded the life cycle of a login session (creation, scope start, scope end or removal).",
+  "why": "Every SSH login, including ALM's own, gets a session. These lines are the paperwork around it and need no action.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|REQ-<hex>",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|Received error: register request: http <n>: backend not found or not available; reqType=noise-register/machine-pubkey; saw <n>/<n>; tn=<n>",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|Received error: register request: unexpected end of JSON input",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"Received error: %v\")",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"Received error: %v\") (<n> dropped)",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"control: RegisterReq: onode=%v node=%v fup=%v nks=%v\")",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"control: RegisterReq: onode=%v node=%v fup=%v nks=%v\") (<n> dropped)",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"control: doLogin(regen=%v, hasUrl=%v)\")",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"control: doLogin(regen=%v, hasUrl=%v)\") (<n> dropped)",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"health(warnable=%s): error: %s\")",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|[RATELIMIT] format(\"health(warnable=%s): error: %s\") (<n> dropped)",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|control: RegisterReq: onode=[mpbM4] node=[ItrPR] fup=true nks=false",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|control: doLogin(regen=false, hasUrl=true)",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|control: error decoding RegisterResponse with server key mkey:<hex> and machine key mkey:<hex>: unexpected end of JSON input",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|health(warnable=login-state): error: You are logged out. The last login error was: register request: http <n>: backend not found or not available; reqType=noise",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Could not reach the Tailscale control server",
+  "what": "tailscaled tried to register with Tailscale's control server and got an error (HTTP 502 or an empty reply). It also reports the node as logged out.",
+  "why": "A control-plane outage or a network blip. The machine's own services keep working. If it persists, the node needs `tailscale up` again.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|logtail: upload succeeded after <n> failures and 1m0s",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Tailscale log upload",
+  "what": "tailscaled tried to upload its own logs to Tailscale and either failed or succeeded after earlier failures.",
+  "why": "Tracks the same connectivity trouble as the control-server errors. Not about your data.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|logtail: upload: log upload of <n> bytes compressed failed: Post \"https://log.tailscale.com/c/tailnode.log.tailscale.io/<hex>\": EOF",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Tailscale log upload",
+  "what": "tailscaled tried to upload its own logs to Tailscale and either failed or succeeded after earlier failures.",
+  "why": "Tracks the same connectivity trouble as the control-server errors. Not about your data.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|offline auto-update: running \"systemd-run --wait --pipe --collect /usr/bin/tailscale update --yes\"",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Tailscale self-update",
+  "what": "Tailscale checked for an update and ran its own updater.",
+  "why": "tailscaled keeps itself current when auto-update is on. These lines are the run and its result.",
+  "by": "claude"
+ },
+ {
+  "sig": "tailscaled|offline auto-update: update attempt complete",
+  "source": "tailscaled",
+  "category": "Tailscale",
+  "title": "Tailscale self-update",
+  "what": "Tailscale checked for an update and ran its own updater.",
+  "why": "tailscaled keeps itself current when auto-update is on. These lines are the run and its result.",
+  "by": "claude"
+ },
+ {
+  "sig": "ufw|block <n> <ip>",
+  "source": "ufw",
+  "category": "Firewall",
+  "title": "Blocked packet, IP protocol {n}",
+  "what": "UFW dropped a packet from {ip} that is neither TCP nor UDP (IP protocol number {n}; 1 is ICMP, the protocol behind ping).",
+  "why": "The firewall is not answering these. Occasional ones are normal network chatter or scans.",
+  "by": "claude"
+ },
+ {
+  "sig": "ufw|block TCP <ip> -> :<n>",
+  "source": "ufw",
+  "category": "Firewall",
+  "title": "Blocked TCP connection to port {n}",
+  "what": "UFW, the firewall on myserver, dropped an unsolicited TCP connection attempt from {ip} to port {n}.",
+  "why": "UFW logs every packet it blocks. Scanners across the internet probe ports around the clock, so a steady trickle is background noise. Eight or more from one address inside a minute is a port scan, and ALM raises its own error for that.",
+  "by": "claude"
+ },
+ {
+  "sig": "ufw|block UDP <ip> -> :<n>",
+  "source": "ufw",
+  "category": "Firewall",
+  "title": "Blocked UDP packet to port {n}",
+  "what": "UFW dropped an unsolicited UDP packet from {ip} to port {n}.",
+  "why": "Same reason as a blocked TCP connection: nothing here is listening, so the firewall discards it. UDP probes are often looking for open DNS, NTP or game services.",
+  "by": "claude"
+ }
+]
