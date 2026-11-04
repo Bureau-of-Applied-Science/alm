@@ -10,7 +10,7 @@ How the live install is set up, how to run things, and how to debug. For how the
 | Code | `~/code/alm` (git checkout) |
 | Python | `.venv/` in the repo (created with `venv --without-pip` + get-pip because `python3-venv` is missing) |
 | Service | systemd **user** unit `alm`, installed from `deploy/alm-crostini.service` to `~/.config/systemd/user/alm.service`; enabled; user linger is on, so it survives logout |
-| Command | `main.py --web-only --port 8000 --ssh myserver --ssh-file myserver:/var/log/caddy/access.log:caddy:sudo` |
+| Command | `main.py --web-only --port 8000`; the host and token come from `~/.config/alm/alm.env` (`ALM_COLLECTOR=myserver`, optional `ALM_TOKEN`, mode 600). Without a collector: `--ssh myserver --ssh-file myserver:/var/log/caddy/access.log:caddy:sudo` |
 | URL | `http://localhost:8000/` (Crostini forwards the port to ChromeOS); screensaver view `http://localhost:8000/?screensaver=1` |
 | History | `~/.local/share/alm/history.db` (SQLite, WAL, 7 days, capped at 5M rows (`--max-rows`)) |
 | Watched host | `myserver` (Ubuntu server), ssh alias with key auth, user `ubuntu`; Caddy log read with `sudo -n tail` |
@@ -61,14 +61,18 @@ Stop the service before binding port 8000 by hand, or use another port. A hand-r
 | `--journal` | off | local journald |
 | `--ssh HOST` | | remote journal + `/var/log/fail2ban.log` (repeatable) |
 | `--ssh-file HOST:PATH:PARSER[:sudo]` | | one remote file; parsers `caddy`, `fail2ban`, `plain` |
+| `--collector HOST` | `ALM_COLLECTOR` (comma separated) | sync from the collector on HOST |
 | `--token` | `ALM_TOKEN` (`SPOT_TOKEN` still read) | shared secret for `/ws` and `/api/state` |
 | `--db` | `~/.local/share/alm/history.db` | history file |
 | `--no-history` | | no store, no timeline |
 | `--keep-days` | 7 | retention |
 | `--max-rows` | 5000000 | history row cap (about 1.5 GB), oldest dropped first |
-| `--backfill HOURS` | 24 | journal backfill at start, 0 disables |
+| `--backfill HOURS` | 24 | first-run journal window, used only until a sync cursor exists; 0 = start from now |
 
 With none of `--tail/--journal/--ssh/--ssh-file` the engine runs in **mock mode** (fake entries, no history).
+
+## Collector on the watched host (optional, recommended)
+Keeps the record on the server so the Chromebook is only a viewer. Install: `deploy/install-collector.sh myserver` (copies three files to `~/alm-collector`, installs a user unit, restarts it; `--remove` undoes it). Check: `ssh myserver 'systemctl --user status alm-collector; python3 ~/alm-collector/alm_collector.py status'`. Store: `~/.local/share/alm-collector/collector.db` on the host (override with `ALM_COLLECTOR_DB`). Switch the client by setting `ALM_COLLECTOR=myserver` in `~/.config/alm/alm.env`. The client's own history keeps working, and its cursor lives in `cursors` as `collector:myserver`. The collector needs `sudo -n tail` for a root-only log and `loginctl enable-linger` for its user. Redeploy after changing `alm_collector.py`, `tail.py` or `burst.py`. If the daemon dies while its store stays readable, the client logs `collector on HOST is not collecting`.
 
 ## Extension install and update
 
@@ -101,11 +105,11 @@ They live in the `explanations` table of `history.db` and are never pruned. A pa
 | No myserver entries, `alm` warn "lost myserver journal, retrying" | `ssh -o BatchMode=yes myserver true` | key or network problem. The follower retries with backoff up to 60 s. |
 | No Caddy entries | `ssh myserver 'sudo -n tail -n 1 /var/log/caddy/access.log'` | needs passwordless sudo, or put the user in the `caddy` group and drop `:sudo` |
 | Timeline buttons do nothing | startup flags | `--no-history`, or mock mode (history is off). |
-| Timeline empty or sparse | `sqlite3 ~/.local/share/alm/history.db 'select count(*), datetime(min(t),"unixepoch") from entries'` | history too young, or backfill disabled/failed (ssh down at start). |
+| Timeline empty or sparse | `sqlite3 ~/.local/share/alm/history.db 'select count(*), datetime(min(t),"unixepoch") from entries'` | history too young, or sync not caught up yet (ssh down). Cursors: `select * from cursors`; delete a row to resync that source from the `--backfill` window. |
 | Orphan `ssh ... tail` processes | `pgrep -af 'ssh.*tail'` | should not happen (children are reaped); if they do, the service was killed outside systemd. Kill them by hand. |
 | Container restarted, nothing running | `systemctl --user status alm` | linger must be `yes` (`loginctl show-user $USER -p Linger`). |
 
-Resetting history: stop the service, delete `history.db*` (all three files), start it. The next start backfills 24 h again. Do not delete it while the service runs.
+Resetting history: stop the service, delete `history.db*` (all three files), start it. The next start syncs the last 24 h again. Do not delete it while the service runs.
 
 ## Data and privacy notes
 

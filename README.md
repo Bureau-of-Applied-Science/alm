@@ -27,6 +27,7 @@ The engine runs here and follows the remote machine through `ssh` (key auth only
 ```
 .venv/bin/python main.py --ssh myserver
 .venv/bin/python main.py --ssh myserver --ssh-file myserver:/var/log/caddy/access.log:caddy:sudo
+.venv/bin/python main.py --collector myserver     # preferred: sync from the collector on the host (deploy/install-collector.sh myserver)
 ```
 
 - `--ssh HOST` follows the remote journal (sshd, kernel firewall, services) plus `/var/log/fail2ban.log`. Needs a user in `adm` or `systemd-journal`.
@@ -46,7 +47,7 @@ Explore history in order: window buttons **5m, 30m, 1h, 6h, 12h, 24h** play the 
 
 - Browser (normal and screensaver): a faint `TIMELINE` toggle at the lower right, within right-thumb reach. Tap it for the window keys (5m to 24h, plus Pause and Live while playing); it folds away after a window is chosen or 6 s idle. The first key there, **Pause** (or Space), holds the live screen; resume catches you up: after a pause of 5 s or more it replays everything that arrived, with the clock counting down to live (`LIVE IN 0:12`), and the clock then glitches away. A shorter pause just replays what warned.
 - TUI: `t` cycles live, 5m ... 24h, live; `p` pause/resume; `x` back to live.
-- History is a SQLite file, `~/.local/share/alm/history.db` (`--db`), kept 7 days (`--keep-days`). On start, journal sources backfill the last 24 h (`--backfill HOURS`, 0 disables) so the timeline is useful immediately. `--no-history` turns it all off. Only real sources are stored, never mock data.
+- History is a SQLite file, `~/.local/share/alm/history.db` (`--db`), kept 7 days (`--keep-days`). Each source syncs by a stored cursor on every start and reconnect, so sleep or a restart leaves no hole; the very first run loads `--backfill HOURS` (default 24, 0 = from now). `--no-history` turns it all off. Only real sources are stored, never mock data.
 
 ## Desk events
 

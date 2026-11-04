@@ -583,7 +583,7 @@ points for a rebuild, worth re-tuning by eye rather than treating as exact:
 | Screensaver swipe threshold | 64 px inward | Travel needed to count as a swipe |
 | Vignette darkness | <= ~25% at corners, beneath text | See §4.6 |
 | History retention | 7 days | `--keep-days` |
-| Journal backfill | 24 h on start | `--backfill HOURS`, 0 disables |
+| First-run journal window | 24 h | `--backfill HOURS`, 0 = from now; later runs resume by cursor |
 
 ---
 
@@ -608,10 +608,12 @@ points for a rebuild, worth re-tuning by eye rather than treating as exact:
   with an epoch timestamp, written before display sampling so playback has the
   evidence, pruned to a retention (default 7 days, configurable). This also
   lets the away bank survive restarts.
-- **Backfill.** A freshly started engine has no history, so a 24 h window is
-  empty until it has run for 24 h. Journal sources backfill 24 h on start with
-  `journalctl --since` (on by default; duplicates against stored history are
-  ignored). File sources do not backfill yet.
+- **Sync.** The record lives on the watched host. Each follower stores a cursor
+  (journal cursor, or last epoch for files) with the entries and resumes from it
+  on every start and reconnect; a collector on the host (`alm_collector.py`) can
+  keep the record itself and stream it by cursor. Synced entries (older than 60 s
+  on arrival) go to history only and do not run the burst detector, so the
+  collector raises the alerts. `--backfill` is only the first-run window.
 - **Timeline scrubbing and speed control** are not specced. Backfill does not
   run the burst detector, so scans from before a restart show as individual
   warns/blocks, not as a single burst alert.

@@ -55,7 +55,7 @@ Key facts:
 | `history.py` | ~105 | `History`: SQLite store, buffered writes, unique index, retention. |
 | `burst.py` | ~55 | `BurstDetector`: N suspicious events from one public IP in a window become one synthetic alert. |
 | `explain.py` | ~100 | Entry signatures (source plus message with addresses, numbers, users and paths replaced by placeholders), `lookup`, `fill`. What an entry is and why it is there. |
-| `tail.py` | ~360 | Everything that feeds the engine: `parse_line`, per-source parsers, `tail_file`, `follow_command` (subprocess follower with backoff), ssh/journal helpers, `backfill_journal`. |
+| `tail.py` | ~360 | Everything that feeds the engine: `parse_line`, per-source parsers, `tail_file`, `follow_command` (subprocess follower with backoff), ssh/journal helpers, cursor sync. |
 | `rain_web.py` | ~105 | `create_app(engine, token)`: FastAPI. `GET /`, `GET /api/state`, `WS /ws`. Translates JSON actions into engine calls, forwards every engine event to the socket. |
 | `rain_tui.py` | ~350 | Textual terminal client (`LogRainApp`, `RainView`, `DetailScreen`). |
 | `main.py` | ~100 | CLI flags; wires sources, engine, web server and TUI into one asyncio loop. |
@@ -88,7 +88,7 @@ source line
 ```
 
 Side paths into the same machinery:
-- `engine.record()`: history only (no display, no burst). Used by journal backfill.
+- `engine.record()`: history only (no display, no burst). Used by sync (entries older than 60 s on arrival).
 - `engine.desk()`: history only, source `desk`. Used for screensaver interaction events (section 15).
 - Playback (`_playback_tick`) and away-replay (`replay_flagged`) also go through `_add_stream(..., replay=True)`.
 - Mock mode (no real source given): `_spawn_loop` generates fake entries, history is disabled. Real sources turn mock off and history on.
@@ -165,8 +165,12 @@ Presence is toggled manually (a header button or `a` in the TUI). Detecting it f
 - Retention 7 days (`--keep-days`), pruned hourly, and capped at 5M rows (`--max-rows`, oldest dropped first). Default file `~/.local/share/alm/history.db` (`--db`). `--no-history` disables history and with it the timeline.
 - Only real sources are stored, never mock data. Tests use `--no-history` by default so they cannot pollute the real DB.
 
-### Backfill
-At start, journal sources (`--journal`, `--ssh`) load the last 24 h (`--backfill HOURS`, 0 disables) via `journalctl --since` into history (`engine.record`). It does not display and does **not** run the burst detector (known gap).
+### Sync (replaces the old start-only backfill)
+The engine is a replica of what the watched host already keeps (journald, Caddy and fail2ban files), not a live tap. Each follower stores a **cursor** in the `cursors` table (same flush/transaction as the entries, so a cursor never runs ahead of its data) and resumes from it on every start and every reconnect, so laptop sleep, a service restart or an ssh drop leaves no hole.
+- Journal: `journalctl -f -o json --after-cursor=<__CURSOR>`; with no cursor yet, `--since "<--backfill> hours ago"` (default 24, 0 = from now). A cursor the journal rejects (vacuumed) is dropped and the next start begins from the window.
+- Files (Caddy, fail2ban): `tail -F -n 20000`, records at or before the stored epoch are dropped. Needs a timestamp per line: Caddy has one; fail2ban's server-local stamp is converted with the host's `date +%z` (`Fail2ban` parser). `plain` files have none and follow from now (`-n 0`). Rotated logs (`.1`, `.gz`) are not read.
+- Arrival older than `LIVE_WINDOW_S` (60 s) means sync: `engine.record` (history only, no display, no burst detector, the known gap). Fresh entries are shown as before.
+- One shared ssh connection per host (`ControlMaster=auto`, socket in `$XDG_RUNTIME_DIR`): servers commonly rate-limit new ssh logins (ufw LIMIT on 22, `MaxStartups`), and a four-login reconnect storm was observed being refused.
 
 ### Playback (`playback.py`, driven by the engine)
 A virtual clock sweeps `[now - window, now]` over a fixed real duration: 5m in 30 s, 30m in 60 s, 1h in 90 s, 6h in 150 s, 12h in 180 s, 24h in 240 s (other windows, as in away-return, interpolate; minimum 15 s). Entries appear when the virtual clock reaches their timestamp, so the little clock in the UI is the time the entries "happened".
@@ -186,17 +190,24 @@ During playback: live info is hidden; live warn/error are banked and the UI show
 | Source | Flag | Mechanism |
 |---|---|---|
 | Local file | `--tail FILE` (repeatable) | polling tail (`tail_file`), JSON or `[HH:MM:SS] LEVEL source message` lines, anything else becomes info |
-| Local journal | `--journal` | `journalctl -f -n 0 -o json` via `follow_command` |
-| Remote journal + fail2ban | `--ssh HOST` | `ssh HOST journalctl -f ...` and `ssh HOST tail -F /var/log/fail2ban.log` |
+| Local journal | `--journal` | `journalctl -f -o json --after-cursor=...` via `follow_command` |
+| Remote journal + fail2ban | `--ssh HOST` | `ssh HOST journalctl -f ...` and `ssh HOST tail -F /var/log/fail2ban.log` (both resumable) |
 | Remote file | `--ssh-file HOST:PATH:PARSER[:sudo]` | `ssh HOST [sudo -n] tail -F PATH`; parsers `caddy`, `fail2ban`, `plain`; paths containing `:` unsupported |
 
-`follow_command` runs a long-lived subprocess, parses each stdout line, and restarts it with exponential backoff (2 s doubling to 60 s; reset after 30 s healthy). The first loss per outage is announced as a `warn` from source `alm` ("lost X, retrying"). **The child is always reaped in `finally`** (a leak of orphaned `ssh ... tail` processes was a real bug); the systemd unit also uses `KillMode=control-group`.
+`follow_command` runs a long-lived subprocess, parses each stdout line, and restarts it with exponential backoff (2 s doubling to 60 s; reset after 30 s healthy). The first loss per outage is announced as a `warn` from source `alm` ("lost X, retrying"). Optional `key`/`cursor_of`/`resume`/`prepare` make it resumable (see Sync). **The child is always reaped in `finally`** (a leak of orphaned `ssh ... tail` processes was a real bug); the systemd unit also uses `KillMode=control-group`.
 
 Parser behavior worth knowing:
 - Journal: `PRIORITY` 0-3 error, 4 warn, 5-6 info, 7 debug; source is `SYSLOG_IDENTIFIER` (or `_COMM`). Kernel lines containing `[UFW ...]` become source `ufw`, text `block TCP 1.2.3.4 -> :5432`, level info. `sshd` info lines matching probing patterns (Failed, Invalid user, authentication failure, bad negotiation, ...) are raised to **warn**.
 - fail2ban: `Found` warn, `Ban`/`Restore Ban` error, `Unban` info, source `f2b:<jail>`. Its own timestamp is dropped (server-local time) so arrival time is used.
 - Caddy access JSON: 5xx error, 4xx warn, else info, source `caddy`, message is a sentence: `<who> <verb> <path> [(status)] from <ip>`, e.g. `Safari on iPhone viewed / from 1.2.3.4`, `GPTBot loaded /fonts/a.woff2 from ...`, `curl probed /.env (404) from ...`. Who comes from the User-Agent (bot name, tool, or browser on OS); verbs: viewed, loaded (assets), probed (scanner paths, dotfiles), requested (other 4xx), was redirected at, sent POST to. Assets (`loaded`) a visitor fetches within 10 s of viewing a page are folded into that view by `CaddyFold` (stateful, one per followed file): they go to history only (`HistoryOnly` records, `engine.record`), never to the rain. Host is dropped (one site per log today), paths cap at 60 chars.
 - Caddy's own service log (certificates, ACME, reverse proxy) arrives via the journal as JSON; `tail.caddy_service` turns it into `logger: msg · subject` (the subject, a host or request, comes after ` · ` and is left out of the explanation signature). Lines of 100+ characters are cut at 110 plus 80 for the subject. History rows written before 2026-10-30 were rewritten in place to this form.
+
+### Collector (`alm_collector.py`, runs on the watched host)
+The durable record lives on the host, so a screen can be asleep, off or new and still sync everything. Stdlib only (Python 3.10), deployed with `tail.py` and `burst.py` beside it (`deploy/install-collector.sh HOST`, a user systemd unit; nothing needs root).
+- `run`: follows the host's journal and log files with the same parsers and `follow_command` (a `Sink` stands in for the engine), stores every entry in SQLite with a sequence number (`entries(seq, t, level, source, message, quiet)`), keeps its own follower cursors, prunes (14 days, 3M rows), and raises **burst alerts** itself as ordinary `alm` error entries, so they exist while nobody watches. `quiet` marks Caddy assets folded into a page view. SIGTERM cancels the followers so their children are reaped.
+- `stream --after <storeid>:<seq> --since EPOCH`: what a client runs over ssh. One JSON line per entry (`c` cursor, `t`, `l`, `o`, `m`, `q`), then follows, with `{"hb": ...}` heartbeats every 15 s. A cursor from a different store id (db reset) restarts from `--since`.
+- Client: `main.py --collector HOST` (replaces `--ssh`/`--ssh-file` for that host). `tail_collector` is one resumable `follow_command` (cursor key `collector:HOST`) over the shared ssh connection; the engine sets `local_bursts = False` so alerts are not raised twice. Old entries arrive history-only, fresh ones are shown, folded ones are `HistoryOnly`.
+- Failure model: collector down means the client still shows `lost HOST collector, retrying` and resumes by cursor when it returns; the client down means nothing is lost.
 
 ## 11. Burst detector (`burst.py`)
 
@@ -252,7 +263,8 @@ While the saver is up the page reports `opened` (first websocket open), `input` 
 | `test_playback.py` | digest planner, fairness, noisy demotion, clock/labels, engine playback (fake clock), away-return |
 | `test_history.py`, `test_burst.py` | store semantics (including the row cap); burst thresholds |
 | `test_explain.py` | entry signatures, placeholder fill, lookup, the shipped catalogue is complete |
-| `test_tail.py` | all parsers (including Caddy access sentences and Caddy's own service log), followers, backfill, child reaping |
+| `test_tail.py` | all parsers (including Caddy access sentences and Caddy's own service log), followers, cursor sync, child reaping |
+| `test_collector.py` | collector store/stream/burst, client parse, an end-to-end collector plus client over a real file |
 | `test_tui.py` | Textual pilot |
 | `test_browser.py` | `Server` fixture (real uvicorn on a free port, `--no-history` by default, optional `db`); caught-on-connect, reconnect, token |
 | `test_ui.py`, `test_timeline_ui.py` | Playwright against the real page: screensaver exit swipes (including CDP touch), interactivity, timeline UI, desk events end to end |
