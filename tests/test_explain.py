@@ -79,3 +79,14 @@ def test_caddy_service_lines_share_a_signature_across_subjects():
     a = signature("caddy", "tls.renew: renewing certificate · sc.example.com")
     b = signature("caddy", "tls.renew: renewing certificate · other.example.org")
     assert a[0] == b[0] == "caddy|tls.renew: renewing certificate" and a[1] == {"subject": "sc.example.com"}
+
+
+def test_load_catalogue_fills_a_fresh_database_and_never_overwrites(tmp_path):
+    from explain import load_catalogue
+    from history import History
+    h = History(":memory:")
+    first = load_catalogue(h)
+    assert first == len(KNOWN) and h.explanation(KNOWN[0]["sig"])["title"] == KNOWN[0]["title"]
+    h.put_explanation(KNOWN[0]["sig"], KNOWN[0]["source"], "Mine", "edited", "w", "y", by="me")
+    assert load_catalogue(h) == 0 and h.explanation(KNOWN[0]["sig"])["title"] == "edited"
+    assert load_catalogue(None) == 0 and load_catalogue(h, tmp_path / "missing.json") == 0

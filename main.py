@@ -15,6 +15,7 @@ import argparse
 import asyncio
 import os
 import sys
+import time
 
 import uvicorn
 
@@ -42,13 +43,22 @@ def resolve_collectors(cli: list[str], environ=os.environ) -> list[str]:
 async def run(host: str, port: int, use_web: bool, use_tui: bool, tails: list[str],
               journal: bool, token: str | None, ssh_hosts: list[str], ssh_files: list[str],
               history: History | None = None, backfill_hours: float = 0,
-              collectors: list[str] | None = None, collector_cmd: str = COLLECTOR_CMD) -> None:
+              collectors: list[str] | None = None, collector_cmd: str = COLLECTOR_CMD,
+              demo: bool = False, demo_pace: float = 1.0) -> None:
     collectors = collectors or []
-    real = bool(tails or journal or ssh_hosts or ssh_files or collectors)
+    real = bool(tails or journal or ssh_hosts or ssh_files or collectors or demo)
     engine = RainEngine(mock=not real, history=history if real else None)
     if collectors:
         engine.local_bursts = False      # the collector raises the alerts, and they arrive as entries
+    if demo:                           # invented data, in memory: the real history is never touched
+        import demo as demo_data
+        demo_data.seed(history, time.time())
+    if history is not None and real:
+        from explain import load_catalogue
+        load_catalogue(history)         # the shipped explanations, added if missing (never overwrites)
     await engine.start()
+    if demo:
+        asyncio.create_task(demo_data.feed(engine, pace=demo_pace))
     for chost in collectors:
         asyncio.create_task(tail_collector(engine, chost, backfill_hours, collector_cmd))
     for path in tails:
@@ -107,11 +117,16 @@ if __name__ == "__main__":
                              "replaces --ssh for that host")
     parser.add_argument("--collector-cmd", default=os.environ.get("ALM_COLLECTOR_CMD") or COLLECTOR_CMD,
                         help="command that starts the collector on the host (default: %(default)s)")
+    parser.add_argument("--demo", action="store_true",
+                        help="invented data with a day of history to replay; nothing real is read or stored")
+    parser.add_argument("--demo-pace", type=float, default=1.0, help=argparse.SUPPRESS)
     parser.add_argument("--journal", action="store_true", help="ingest from journald (journalctl -f)")
     parser.add_argument("--token", default=os.environ.get("ALM_TOKEN"),
                         help="shared secret required on /ws and /api/state (or ALM_TOKEN)")
     args = parser.parse_args()
     args.collector = resolve_collectors(args.collector)
+    if args.demo:
+        args.no_history = False
 
     if args.host not in ("127.0.0.1", "localhost", "::1") and not args.token:
         print("WARNING: listening on a non-loopback address without --token; anyone who can reach "
@@ -120,5 +135,6 @@ if __name__ == "__main__":
     asyncio.run(run(args.host, args.port, use_web=not args.no_web, use_tui=not args.web_only,
                     tails=args.tail, journal=args.journal, token=args.token,
                     ssh_hosts=args.ssh, ssh_files=args.ssh_file,
-                    history=None if args.no_history else History(args.db, args.keep_days * 86400, args.max_rows),
-                    backfill_hours=args.backfill, collectors=args.collector, collector_cmd=args.collector_cmd))
+                    history=History(":memory:") if args.demo else None if args.no_history else History(args.db, args.keep_days * 86400, args.max_rows),
+                    backfill_hours=args.backfill, collectors=args.collector, collector_cmd=args.collector_cmd,
+                    demo=args.demo, demo_pace=args.demo_pace))

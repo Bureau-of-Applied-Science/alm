@@ -72,6 +72,24 @@
   "by": "claude"
  },
  {
+  "sig": "alm|<ip> hit us <n> in <n> (<n> ports, sshd+ufw)",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Burst from one address",
+  "what": "{ip} produced {n} suspicious events inside a short window across several ports, which is what ALM's burst detector watches for.",
+  "why": "A single address hitting the firewall, sshd or the web server many times in a minute is a scan or a brute-force run. ALM raises this one error instead of letting the individual lines bury it.",
+  "by": "claude"
+ },
+ {
+  "sig": "alm|<ip> hit us <n> in <n> (caddy)",
+  "source": "alm",
+  "category": "ALM",
+  "title": "Burst from one address",
+  "what": "{ip} produced {n} suspicious requests to the web server inside a short window.",
+  "why": "A single address hitting the firewall, sshd or the web server many times in a minute is a scan or a brute-force run. ALM raises this one error instead of letting the individual lines bury it.",
+  "by": "claude"
+ },
+ {
   "sig": "alm|<ip> hit us <n> in <n> (f2b:sshd+sshd)",
   "source": "alm",
   "category": "ALM",
@@ -171,6 +189,42 @@
   "by": "claude"
  },
  {
+  "sig": "caddy|<who> requested <path> (500) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "The app crashed on a request",
+  "what": "{who} asked for {path} and got HTTP 500: the app hit an internal error.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> requested <path> (502) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Caddy could not reach the app",
+  "what": "{who} asked for {path} and got HTTP 502: Caddy could not get a valid answer from the app behind it.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> requested <path> (503) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "The app was unavailable",
+  "what": "{who} asked for {path} and got HTTP 503: the app said it was unavailable or overloaded.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> requested <path> (504) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "The app took too long",
+  "what": "{who} asked for {path} and got HTTP 504: the app did not answer in time.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
   "sig": "caddy|<who> sent CONNECT to <path> (308) from <ip>",
   "source": "caddy",
   "category": "Web",
@@ -186,6 +240,51 @@
   "title": "POST redirected",
   "what": "{who} sent a POST to {path} and Caddy redirected it (HTTP {status}).",
   "why": "Bots POST to login and form endpoints. A redirect means the request was bounced before reaching any app.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent POST to <path> (500) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "The app crashed on a request",
+  "what": "{who} sent a POST to {path} and got HTTP 500: the app hit an internal error.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent POST to <path> (502) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Caddy could not reach the app",
+  "what": "{who} sent a POST to {path} and got HTTP 502: Caddy could not get a valid answer from the app behind it.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent POST to <path> (503) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "The app was unavailable",
+  "what": "{who} sent a POST to {path} and got HTTP 503: the app said it was unavailable or overloaded.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent POST to <path> (504) from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "The app took too long",
+  "what": "{who} sent a POST to {path} and got HTTP 504: the app did not answer in time.",
+  "why": "A 5xx means the server or the app behind it failed to answer. One is noise; a run of them for real pages (not scanner paths) means the app is unwell. ALM shows these as errors so they stand out.",
+  "by": "claude"
+ },
+ {
+  "sig": "caddy|<who> sent POST to <path> from <ip>",
+  "source": "caddy",
+  "category": "Web",
+  "title": "Form or API submission",
+  "what": "{who} sent a POST to {path} from {ip}, and it went through.",
+  "why": "POST is how forms and APIs send data. A successful one is normal traffic. ALM shows non-GET requests separately from page views.",
   "by": "claude"
  },
  {

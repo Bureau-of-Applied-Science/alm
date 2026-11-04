@@ -11,8 +11,12 @@ generator would be called there and its answer stored with `History.put_explanat
 """
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
 from typing import Optional
+
+CATALOGUE = Path(__file__).resolve().parent / "knowledge" / "explanations.json"
 
 SIG_MAX = 160
 
@@ -95,3 +99,22 @@ def lookup(history, source: str, message: str) -> dict:
         return {"found": False, "sig": sig}
     return {"found": True, "sig": sig, "category": row["category"], "title": fill(row["title"], params),
             "what": fill(row["what"], params), "why": fill(row["why"], params), "by": row["by"]}
+
+
+def load_catalogue(history, path: Path = CATALOGUE) -> int:
+    """Put the shipped explanations (knowledge/explanations.json) into the history database, so the inspect view
+    works on a fresh install. Only signatures the database does not have yet are added, so local edits and
+    anything written with tools/explain.py survive. Returns how many were added."""
+    if history is None:
+        return 0
+    try:
+        rows = json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return 0
+    added = 0
+    for r in rows:
+        if history.explanation(r["sig"]) is None:
+            history.put_explanation(r["sig"], r["source"], r["category"], r["title"], r["what"], r["why"],
+                                    r.get("by", "claude"))
+            added += 1
+    return added
