@@ -27,10 +27,9 @@ from rain_web import create_app
 
 
 def default_db() -> str:
-    """~/.local/share/alm/history.db; keeps using the pre-rename spot/ file until it is moved."""
+    """~/.local/share/alm/history.db (under XDG_DATA_HOME if set)."""
     base = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
-    new, old = (os.path.join(base, d, "history.db") for d in ("alm", "spot"))
-    return old if os.path.exists(old) and not os.path.exists(new) else new
+    return os.path.join(base, "alm", "history.db")
 
 
 def resolve_collectors(cli: list[str], environ=os.environ) -> list[str]:
@@ -109,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument("--collector-cmd", default=os.environ.get("ALM_COLLECTOR_CMD") or COLLECTOR_CMD,
                         help="command that starts the collector on the host (default: %(default)s)")
     parser.add_argument("--journal", action="store_true", help="ingest from journald (journalctl -f)")
-    parser.add_argument("--token", default=os.environ.get("ALM_TOKEN") or os.environ.get("SPOT_TOKEN"),
+    parser.add_argument("--token", default=os.environ.get("ALM_TOKEN"),
                         help="shared secret required on /ws and /api/state (or ALM_TOKEN)")
     args = parser.parse_args()
     args.collector = resolve_collectors(args.collector)

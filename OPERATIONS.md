@@ -57,7 +57,7 @@ Stop the service before binding port 8000 by hand, or use another port. A hand-r
 | `--ssh HOST` | | remote journal + `/var/log/fail2ban.log` (repeatable) |
 | `--ssh-file HOST:PATH:PARSER[:sudo]` | | one remote file; parsers `caddy`, `fail2ban`, `plain` |
 | `--collector HOST` | `ALM_COLLECTOR` (comma separated) | sync from the collector on HOST |
-| `--token` | `ALM_TOKEN` (`SPOT_TOKEN` still read) | shared secret for `/ws` and `/api/state` |
+| `--token` | `ALM_TOKEN` | shared secret for `/ws` and `/api/state` |
 | `--db` | `~/.local/share/alm/history.db` | history file |
 | `--no-history` | | no store, no timeline |
 | `--keep-days` | 7 | retention |
@@ -78,8 +78,8 @@ Keeps the record on the server so the Chromebook is only a viewer. Install: `dep
 
 Checks that only the Chromebook can answer are in `README.md` ("Checklist only the Chromebook can answer").
 
-## Data notes (2026-10-30)
-History rows written before the rename or the Caddy cleanup were rewritten in place (`spot` source became `alm`; Caddy raw JSON became sentences). A pre-change copy of the database was taken to the session scratch directory, not kept in the repo. `~/.local/share/spot` is a symlink to `alm` and `~/.config/systemd/user/spot.service.bak` is the old unit; both are safe to delete.
+## Data notes
+Caddy access lines are stored as sentences (`Safari on iPhone viewed / from 1.2.3.4`), not raw JSON; rows from before that cleanup were rewritten in place.
 
 ## Explanations (what an entry is and why it is there)
 ```

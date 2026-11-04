@@ -1,6 +1,6 @@
 # ALM todo
 
-Last updated 2026-10-30 (end of the rename / house-style / explanations session). How the code fits together: `ARCHITECTURE.md`; live install and debugging: `OPERATIONS.md`. Specs for the interface batch are in `DESIGN.md` (4.6, 5.5, 5.6, and the 8/9 additions). Order matters: each step lists the test that proves it.
+Last updated 2026-10-30 (end of the house-style / explanations session). How the code fits together: `ARCHITECTURE.md`; live install and debugging: `OPERATIONS.md`. Specs for the interface batch are in `DESIGN.md` (4.6, 5.5, 5.6, and the 8/9 additions). Order matters: each step lists the test that proves it.
 
 ## Interface batch (built 2026-10-29; D2 demo and Chromebook confirmation remain)
 
@@ -32,7 +32,7 @@ Last updated 2026-10-30 (end of the rename / house-style / explanations session)
 - [x] **D2. Demo** against live server data (24h backfill, 24h playback, screenshots checked).
 
 ## Next: house style batch (opened 2026-10-30)
-- [x] **E0. Rename to ALM**, nameplate behind the datafeed, service and DB cutover, history row cap.
+- [x] **E0. Nameplate** behind the datafeed, history row cap.
 - [x] **E1. Clock restyle** (2026-10-30). Playback module with plate, recessed display, stepped 60-segment strip and RUN/HOLD/AWAY lamps (DESIGN 4.7, 5.6). Protocol unchanged; timeline tests pass, with the meta assertions made case-insensitive because the readout is now uppercase.
 - [x] **E1b. Window controls** (2026-10-30). One faint lower-right `TIMELINE` toggle (right-thumb reach, opposite the clock) opens a column of keys; folds away after a choice or 6 s. Clock dimmed and moved behind the streams. Chips keep the old unobtrusive pill look; transport-key styling was dropped in favor of that. Not yet judged on the Chromebook display (thumb reach, brightness).
 
