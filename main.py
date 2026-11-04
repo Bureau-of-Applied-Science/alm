@@ -33,6 +33,13 @@ def default_db() -> str:
     return old if os.path.exists(old) and not os.path.exists(new) else new
 
 
+def resolve_collectors(cli: list[str], environ=os.environ) -> list[str]:
+    """--collector flags win; otherwise ALM_COLLECTOR (comma separated), which is how the service is configured."""
+    if cli:
+        return cli
+    return [h.strip() for h in environ.get("ALM_COLLECTOR", "").split(",") if h.strip()]
+
+
 async def run(host: str, port: int, use_web: bool, use_tui: bool, tails: list[str],
               journal: bool, token: str | None, ssh_hosts: list[str], ssh_files: list[str],
               history: History | None = None, backfill_hours: float = 0,
@@ -105,8 +112,7 @@ if __name__ == "__main__":
     parser.add_argument("--token", default=os.environ.get("ALM_TOKEN") or os.environ.get("SPOT_TOKEN"),
                         help="shared secret required on /ws and /api/state (or ALM_TOKEN)")
     args = parser.parse_args()
-    if not args.collector and os.environ.get("ALM_COLLECTOR"):
-        args.collector = [h.strip() for h in os.environ["ALM_COLLECTOR"].split(",") if h.strip()]
+    args.collector = resolve_collectors(args.collector)
 
     if args.host not in ("127.0.0.1", "localhost", "::1") and not args.token:
         print("WARNING: listening on a non-loopback address without --token; anyone who can reach "

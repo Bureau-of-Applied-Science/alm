@@ -117,7 +117,7 @@ class Store:
 
     def stats(self) -> dict:
         n, lo, hi, top = self._db.execute("SELECT COUNT(*), MIN(t), MAX(t), MAX(seq) FROM entries").fetchone()
-        return {"id": self.id, "entries": n, "oldest": lo, "newest": hi, "seq": top or 0}
+        return {"id": self.id, "entries": n, "oldest": lo, "newest": hi, "seq": top or 0, "alive_age": self.alive_age()}
 
 
 class Sink:
