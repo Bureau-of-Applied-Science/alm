@@ -151,7 +151,7 @@ async def test_follow_command_ingests_then_announces_loss_and_restarts(monkeypat
 async def test_follow_command_records_history_only_records_without_displaying(monkeypatch):
     e = RainEngine(mock=False)
     seen = []
-    e.record = lambda *a: seen.append(a)
+    e.record = lambda *a, **kw: seen.append(a + (kw.get("quiet"),))
     parse = lambda ln: HistoryOnly(("info", "t", ln.strip(), None)) if ln.strip() else None
     t = asyncio.create_task(follow_command(e, ["sh", "-c", "echo quiet; sleep 5"], parse, "h"))
     for _ in range(100):
@@ -159,7 +159,7 @@ async def test_follow_command_records_history_only_records_without_displaying(mo
         if seen:
             break
     t.cancel()
-    assert seen == [("info", "t", "quiet", None)] and not any(s.message == "quiet" for s in e.streams)
+    assert seen == [("info", "t", "quiet", None, True)] and not any(s.message == "quiet" for s in e.streams)
 
 
 async def test_follow_command_survives_missing_binary(monkeypatch):
@@ -245,3 +245,103 @@ def test_caddy_access_line_arriving_via_the_journal_is_a_sentence():
     rec = {"MESSAGE": json.dumps(access), "SYSLOG_IDENTIFIER": "caddy", "PRIORITY": "6"}
     level, source, msg, _ = parse_journal(json.dumps(rec))
     assert (level, source) == ("warn", "caddy") and msg.endswith("probed /.env (404) from 1.2.3.4") and "{" not in msg
+
+
+
+
+def _journal_line(i, cursor, age=3600):
+    import time as _t
+    return json.dumps({"MESSAGE": f"m{i}", "PRIORITY": "4", "SYSLOG_IDENTIFIER": "x", "__CURSOR": cursor,
+                       "__REALTIME_TIMESTAMP": str(int((_t.time() - age) * 1e6))})
+
+
+async def test_journal_sync_records_old_entries_shows_fresh_ones_and_stores_the_cursor(monkeypatch):
+    import tail
+    from history import History
+    e = RainEngine(mock=False, history=History(":memory:"))
+    old, fresh = _journal_line(1, "c1"), _journal_line(2, "c2", age=1)
+    script = f"printf '%s\\n%s\\n' '{old}' '{fresh}'"
+    monkeypatch.setattr(tail.asyncio, "sleep", _fast_sleep(tail.asyncio.sleep))
+    t = asyncio.create_task(tail.follow_command(e, ["sh", "-c", script], parse_journal, "h",
+                                                key="k", cursor_of=tail.journal_cursor))
+    await asyncio.sleep(0.3)
+    t.cancel()
+    await asyncio.gather(t, return_exceptions=True)
+    await asyncio.sleep(0.2)                           # let the shielded child reap finish
+    assert e.history.get_cursor("k") == "c2"
+    assert e.history.count() >= 2
+    msgs = [s.message for s in e.streams]
+    assert "m2" in msgs and "m1" not in msgs          # the night's backlog is history, not rain
+
+
+async def test_follow_command_passes_the_stored_cursor_to_each_restart(monkeypatch):
+    import tail
+    from history import History
+    e = RainEngine(mock=False, history=History(":memory:"))
+    e.history.set_cursor("k", "start")
+    seen = []
+
+    def build(cur):
+        seen.append(cur)
+        return ["sh", "-c", f"echo '{_journal_line(len(seen), f'c{len(seen)}')}'"]
+    monkeypatch.setattr(tail.asyncio, "sleep", _fast_sleep(tail.asyncio.sleep))
+    t = asyncio.create_task(tail.follow_command(e, build, parse_journal, "h", key="k", cursor_of=tail.journal_cursor))
+    for _ in range(200):
+        if len(seen) >= 3:
+            break
+        await asyncio.sleep(0.01)
+    t.cancel()
+    await asyncio.gather(t, return_exceptions=True)
+    await asyncio.sleep(0.2)                           # let the shielded child reap finish
+    assert seen[:3] == ["start", "c1", "c2"]
+
+
+async def test_a_cursor_the_journal_rejects_is_dropped(monkeypatch):
+    import tail
+    from history import History
+    e = RainEngine(mock=False, history=History(":memory:"))
+    e.history.set_cursor("k", "gone")
+    monkeypatch.setattr(tail.asyncio, "sleep", _fast_sleep(tail.asyncio.sleep))
+    t = asyncio.create_task(tail.follow_command(e, ["sh", "-c", "exit 1"], parse_journal, "h",
+                                                key="k", cursor_of=tail.journal_cursor))
+    await asyncio.sleep(0.3)
+    t.cancel()
+    await asyncio.gather(t, return_exceptions=True)
+    await asyncio.sleep(0.2)                           # let the shielded child reap finish
+    assert e.history.get_cursor("k") is None
+
+
+async def test_time_resume_skips_what_history_already_has(monkeypatch):
+    import time as _t
+    import tail
+    from history import History
+    e = RainEngine(mock=False, history=History(":memory:"))
+    now = _t.time()
+    e.history.set_cursor("k", repr(now - 5000))
+    recs = {"a": ("info", "x", "a", now - 9000), "b": ("info", "x", "b", now - 4000)}
+    monkeypatch.setattr(tail.asyncio, "sleep", _fast_sleep(tail.asyncio.sleep))
+    t = asyncio.create_task(tail.follow_command(e, ["sh", "-c", "echo a; echo b; sleep 5"], lambda l: recs[l.strip()],
+                                                "h", key="k", cursor_of=tail.time_cursor, resume="time"))
+    await asyncio.sleep(0.3)
+    t.cancel()
+    await asyncio.gather(t, return_exceptions=True)
+    await asyncio.sleep(0.2)                           # let the shielded child reap finish
+    assert [r[3] for r in e.history.between(0, now + 1)] == ["b"]
+    assert float(e.history.get_cursor("k")) == now - 4000
+
+
+def test_fail2ban_gets_real_epochs_once_the_server_offset_is_known():
+    import calendar
+    import tail
+    f = tail.Fail2ban()
+    line = "2026-11-01 00:12:33,809 fail2ban.filter [1]: INFO    [sshd] Found 213.177.179.52 - 2026-11-01 00:12:33"
+    assert f(line)[3] is None and not f.timed
+    f.offset = -6 * 3600                       # server at UTC-6
+    assert f.timed
+    assert f(line)[3] == calendar.timegm((2026, 11, 1, 0, 12, 33)) + 6 * 3600
+
+
+def test_ssh_shares_one_connection_per_host():
+    import tail
+    argv = tail.ssh_argv("myserver", "true")
+    assert "ControlMaster=auto" in argv and any(a.startswith("ControlPath=") and "%C" in a for a in argv)

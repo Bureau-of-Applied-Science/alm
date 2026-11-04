@@ -33,8 +33,10 @@ class History:
         self._db.execute("CREATE TABLE IF NOT EXISTS explanations("
                          "sig TEXT PRIMARY KEY, source TEXT NOT NULL, category TEXT NOT NULL, title TEXT NOT NULL, "
                          "what TEXT NOT NULL, why TEXT NOT NULL, by TEXT NOT NULL, created REAL NOT NULL)")
+        self._db.execute("CREATE TABLE IF NOT EXISTS cursors(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         self._db.commit()
         self._buf: list[Row] = []
+        self._cur: dict[str, str | None] = {}       # pending cursor writes, committed with the entries
 
     def add(self, t: float, level: str, source: str, message: str) -> None:
         self._buf.append((float(t), level, source, message[:MAX_MESSAGE]))
@@ -42,12 +44,31 @@ class History:
     def add_many(self, rows: Iterable[Row]) -> None:
         self._buf.extend((float(t), l, s, m[:MAX_MESSAGE]) for t, l, s, m in rows)
 
+    # -- sync cursors: where each source's follower stopped (journal cursor, or last epoch for files) ----------
+    def get_cursor(self, key: str) -> str | None:
+        if key in self._cur:
+            return self._cur[key]
+        with self._lock:
+            row = self._db.execute("SELECT value FROM cursors WHERE key = ?", (key,)).fetchone()
+        return row[0] if row else None
+
+    def set_cursor(self, key: str, value: str | None) -> None:
+        """Buffered like entries, and written in the same transaction, so a cursor never runs ahead of its data."""
+        self._cur[key] = value
+
     def flush(self) -> int:
         with self._lock:
             buf, self._buf = self._buf, []
-            if not buf:
+            cur, self._cur = self._cur, {}
+            if not buf and not cur:
                 return 0
-            self._db.executemany("INSERT OR IGNORE INTO entries VALUES (?,?,?,?)", buf)
+            if buf:
+                self._db.executemany("INSERT OR IGNORE INTO entries VALUES (?,?,?,?)", buf)
+            for k, v in cur.items():
+                if v is None:
+                    self._db.execute("DELETE FROM cursors WHERE key = ?", (k,))
+                else:
+                    self._db.execute("INSERT OR REPLACE INTO cursors VALUES (?,?)", (k, v))
             self._db.commit()
             return len(buf)
 

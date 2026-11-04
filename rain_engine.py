@@ -165,6 +165,7 @@ class RainEngine:
         self._paused_wall = 0.0                  # wall time the live pause began: where the catch-up replay starts
         self._away_since: Optional[float] = None
         self.burst = BurstDetector()
+        self.local_bursts = True       # False when a collector on the watched host raises the alerts
         self._tokens = INFO_PER_SEC     # token bucket for info/debug ingest
         self._tokens_at = time.monotonic()
         self.streams: list[Stream] = []
@@ -286,8 +287,10 @@ class RainEngine:
         wall = time.time()
         return wall, ts or self.fmt_ts(wall)
 
-    def record(self, level: str, source: str, message: str, ts: Union[str, float, None] = None) -> None:
-        """History only: no display, no burst detection. Used for backfill."""
+    def record(self, level: str, source: str, message: str, ts: Union[str, float, None] = None,
+               quiet: bool = False) -> None:
+        """History only: no display, no burst detection. Used for sync. `quiet` marks a folded Caddy asset;
+        the engine does not need it (sinks that store it, like the collector, do)."""
         if self.history:
             self.history.add(self._epoch_and_label(ts)[0], level, source, message)
 
@@ -306,7 +309,8 @@ class RainEngine:
         epoch, ts = self._epoch_and_label(ts)
         if self.history:
             self.history.add(epoch, level, source, message)     # before any gating: playback needs the evidence
-        alert = self.burst.observe(time.monotonic(), level, source, message)   # before sampling can drop evidence
+        alert = (self.burst.observe(time.monotonic(), level, source, message)   # before sampling can drop evidence
+                 if self.local_bursts else None)
         if alert:
             self.ingest(*alert)
         if level not in ("warn", "error"):

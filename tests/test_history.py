@@ -5,7 +5,6 @@ import pytest
 
 from history import History
 from rain_engine import RainEngine
-from tail import backfill_journal
 
 
 def test_roundtrip_ordering_and_window():
@@ -90,22 +89,31 @@ def test_record_stores_without_displaying_or_alerting(clock):
     assert h.count() == 20 and not e.streams and not e.flagged
 
 
-async def test_backfill_loads_journal_into_history_only(monkeypatch, tmp_path):
+async def test_journal_first_sync_loads_the_backlog_into_history_only(monkeypatch, tmp_path):
     import tail
-    lines = [json.dumps({"MESSAGE": f"old {i}", "PRIORITY": "3", "SYSLOG_IDENTIFIER": "x",
+    lines = [json.dumps({"MESSAGE": f"old {i}", "PRIORITY": "3", "SYSLOG_IDENTIFIER": "x", "__CURSOR": f"c{i}",
                          "__REALTIME_TIMESTAMP": str(1_700_000_000_000_000 + i * 1_000_000)}) for i in range(5)]
     script = tmp_path / "fake_journalctl.py"
     script.write_text("import sys\nprint(" + repr("\n".join(lines)) + ")\n")
+    seen = []
 
     real = asyncio.create_subprocess_exec
+
     async def fake_exec(*argv, **kw):                     # stand in for `journalctl ...`
+        seen.append(list(argv))
         return await real("python3", str(script), **kw)
     monkeypatch.setattr(tail.asyncio, "create_subprocess_exec", fake_exec)
 
     h = History(":memory:")
     e = RainEngine(mock=False, history=h)
-    assert await backfill_journal(e, 24) == 5
-    assert await backfill_journal(e, 24) == 5             # re-running overlaps: duplicates ignored
-    assert h.count() == 5 and not e.streams
-    assert h.between(1_700_000_000, 1_700_000_001)[0][3] == "old 0"
-    assert await backfill_journal(e, 0) == 0              # disabled
+    t = asyncio.create_task(tail.tail_journal(e, backfill_hours=24))
+    for _ in range(200):
+        await asyncio.sleep(0.01)
+        if h.get_cursor("journal:local") == "c4":
+            break
+    t.cancel()
+    await asyncio.gather(t, return_exceptions=True)
+    assert seen[0][seen[0].index("--since") + 1] == "24 hours ago"      # no cursor yet: first-run window
+    assert [r[3] for r in h.between(0, 2e9) if r[2] == "x"] == [f"old {i}" for i in range(5)]
+    assert not [s for s in e.streams if s.message.startswith("old")]      # history only, nothing displayed
+    assert h.get_cursor("journal:local") == "c4"

@@ -10,9 +10,9 @@ import json
 import os
 import re
 import shlex
+import tempfile
 import time
 
-from rain_engine import RainEngine
 
 LEVELS = {"debug", "info", "warn", "error"}
 ALIASES = {"warning": "warn", "err": "error", "fatal": "error", "critical": "error", "trace": "debug"}
@@ -260,8 +260,13 @@ def parse_journal(line: str) -> tuple[str, str, str, float | None] | None:
 
 
 
+# One shared connection per host (ControlMaster): every follower is a channel on it. The server rate-limits
+# new ssh connections (ufw LIMIT, MaxStartups), so a reconnect storm of four fresh logins after a laptop wake
+# would get refused and could even earn a fail2ban ban. The master dies with the service (KillMode=control-group).
+_CTL_DIR = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
 SSH_OPTS = ["-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
-            "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3"]
+            "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3",
+            "-o", "ControlMaster=auto", "-o", f"ControlPath={_CTL_DIR}/alm-ssh-%C", "-o", "ControlPersist=60"]
 
 
 async def _reap(proc) -> None:
@@ -277,25 +282,68 @@ async def _reap(proc) -> None:
                 pass
 
 
-async def follow_command(engine: RainEngine, argv: list[str], parse, label: str) -> None:
+LIVE_WINDOW_S = 60.0             # an entry older than this on arrival is sync (history only), not live
+FILE_SYNC_LINES = 20000          # remote files have no --since: re-read this many trailing lines and filter by time
+CURSOR_RE = re.compile(r'"__CURSOR"\s*:\s*"([^"]+)"')
+
+
+def journal_cursor(text: str, rec) -> str | None:
+    m = CURSOR_RE.search(text)
+    return m.group(1) if m else None
+
+
+def time_cursor(text: str, rec) -> str | None:
+    ts = rec[3] if rec and len(rec) > 3 else None
+    return repr(float(ts)) if isinstance(ts, (int, float)) else None
+
+
+async def follow_command(engine: RainEngine, argv, parse, label: str, *, key: str | None = None,
+                         cursor_of=None, resume: str = "cursor", prepare=None) -> None:
     """Run a long-lived command, feed each stdout line through `parse` into the engine, and
     restart it with backoff when it dies. Disconnects surface as a warn from source "alm".
-    The child is always terminated when this task is cancelled or the engine shuts down."""
+    The child is always terminated when this task is cancelled or the engine shuts down.
+
+    Sync: with `key` and a history, the position reached is stored (`cursor_of(text, rec)` -> str) in the same
+    flush as the entries, and `argv` may be a callable taking the stored cursor (or None) so every (re)start
+    resumes where the last one stopped. Whatever the outage missed arrives first and is older than
+    LIVE_WINDOW_S, so it goes to history only; only fresh entries are shown. resume="time" additionally drops
+    records at or before the stored epoch (for `tail`, which cannot resume by itself)."""
     delay, announced = 2.0, False
+    hist = engine.history if key else None
     while True:
         started = time.monotonic()
         proc = None
+        lines = 0
+        cur = hist.get_cursor(key) if hist else None
         try:
+            if prepare is not None:
+                await prepare()
+            args = argv(cur) if callable(argv) else argv
             proc = await asyncio.create_subprocess_exec(
-                *argv, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL, limit=1 << 20)
+                *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL, limit=1 << 20)
             assert proc.stdout is not None
             async for raw in proc.stdout:
-                rec = parse(raw.decode("utf-8", "replace"))
-                if isinstance(rec, HistoryOnly):
-                    engine.record(*rec)
-                elif rec:
-                    engine.ingest(*rec)
+                lines += 1
+                text = raw.decode("utf-8", "replace")
+                rec = parse(text)
+                ts = rec[3] if rec and len(rec) > 3 else None
+                numeric = isinstance(ts, (int, float))
+                if hist and resume == "time" and cur and numeric and ts <= float(cur):
+                    continue                                   # already have it
+                if rec:
+                    if isinstance(rec, HistoryOnly):
+                        engine.record(*rec, quiet=True)
+                    elif numeric and ts < time.time() - LIVE_WINDOW_S:
+                        engine.record(*rec)
+                    else:
+                        engine.ingest(*rec)
+                if hist and cursor_of:
+                    c = cursor_of(text, rec)
+                    if c:
+                        hist.set_cursor(key, c)
             await proc.wait()
+            if hist and cur and lines == 0 and proc.returncode not in (0, 255, None) and resume == "cursor":
+                hist.set_cursor(key, None)       # the journal no longer knows our cursor (vacuumed): start over
         except OSError:
             pass
         finally:
@@ -309,55 +357,163 @@ async def follow_command(engine: RainEngine, argv: list[str], parse, label: str)
         delay = min(delay * 2, 60.0)
 
 
-async def tail_journal(engine: RainEngine, extra_args: list[str] | None = None) -> None:
-    """Follow the local journald from now on."""
-    await follow_command(engine, ["journalctl", "-f", "-n", "0", "-o", "json", *(extra_args or [])],
-                         parse_journal, "local journal")
+def journal_argv(hours: float, remote: bool):
+    """journalctl that resumes after a stored cursor, else loads `hours` back, else starts at now; then follows."""
+    def build(cur: str | None) -> list[str]:
+        if cur:
+            pos = ["--after-cursor", cur]
+        elif hours > 0:
+            pos = ["--since", f"{hours:g} hours ago"]
+        else:
+            pos = ["-n", "0"]
+        return ["journalctl", "-f", "-o", "json", *pos]
+    return build
+
+
+async def tail_journal(engine: RainEngine, extra_args: list[str] | None = None, backfill_hours: float = 0) -> None:
+    """Follow the local journald, resuming from the stored cursor."""
+    build = journal_argv(backfill_hours if engine.history else 0, False)
+    await follow_command(engine, lambda cur: build(cur) + list(extra_args or []), parse_journal, "local journal",
+                         key="journal:local", cursor_of=journal_cursor)
 
 
 def ssh_argv(host: str, remote_cmd: str) -> list[str]:
     return ["ssh", *SSH_OPTS, host, remote_cmd]
 
 
-async def tail_ssh_journal(engine: RainEngine, host: str) -> None:
-    await follow_command(engine, ssh_argv(host, "journalctl -f -n 0 -o json"), parse_journal, f"{host} journal")
+async def tail_ssh_journal(engine: RainEngine, host: str, backfill_hours: float = 0) -> None:
+    build = journal_argv(backfill_hours if engine.history else 0, True)
+    await follow_command(engine, lambda cur: ssh_argv(host, shlex.join(build(cur))), parse_journal,
+                         f"{host} journal", key=f"journal:{host}", cursor_of=journal_cursor)
 
+
+class Fail2ban:
+    """fail2ban stamps server-local time without a zone. With the host's UTC offset (`date +%z` over ssh)
+    each line gets a real epoch, which lets the file be re-read after an outage. Without it, lines are
+    stamped on arrival, as before, and nothing can be synced."""
+    STAMP = re.compile(r"^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)")
+
+    def __init__(self) -> None:
+        self.offset: float | None = None
+
+    @property
+    def timed(self) -> bool:
+        return self.offset is not None
+
+    def __call__(self, line: str):
+        rec = parse_fail2ban(line)
+        if rec and self.offset is not None:
+            m = self.STAMP.match(line)
+            if m:
+                import calendar
+                ts = calendar.timegm(tuple(int(x) for x in m.groups()) + (0, 0, 0)) - self.offset
+                rec = (rec[0], rec[1], rec[2], ts)
+        return rec
+
+    async def prepare_for(self, host: str) -> None:
+        try:
+            p = await asyncio.create_subprocess_exec(*ssh_argv(host, "date +%z"), stdout=asyncio.subprocess.PIPE,
+                                                     stderr=asyncio.subprocess.DEVNULL)
+            out, _ = await asyncio.wait_for(p.communicate(), 20)
+            z = out.decode().strip()
+            if re.fullmatch(r"[+-]\d{4}", z):
+                self.offset = (1 if z[0] == "+" else -1) * (int(z[1:3]) * 3600 + int(z[3:5]) * 60)
+        except (OSError, asyncio.TimeoutError):
+            pass
+
+
+class Plain:
+    timed = False
+
+    def __call__(self, line: str):
+        return parse_line(line) if line.strip() else None
+
+
+CaddyFold.timed = True
 
 FILE_PARSERS = {
     # factories: a parser may keep state, and each followed file gets its own
     "caddy": CaddyFold,
-    "fail2ban": lambda: parse_fail2ban,
-    "plain": lambda: (lambda line: parse_line(line) if line.strip() else None),
+    "fail2ban": Fail2ban,
+    "plain": Plain,
 }
 
 
 async def tail_ssh_file(engine: RainEngine, host: str, path: str, parser: str, sudo: bool = False) -> None:
-    cmd = f"{'sudo -n ' if sudo else ''}tail -F -n 0 {shlex.quote(path)}"
-    await follow_command(engine, ssh_argv(host, cmd), FILE_PARSERS[parser](), f"{host}:{path}")
+    p = FILE_PARSERS[parser]()
+    prefix = "sudo -n " if sudo else ""
+
+    def build(cur):
+        # timed sources re-read a long tail and let follow_command drop what history already has;
+        # the others can only follow from now
+        n = FILE_SYNC_LINES if p.timed else 0
+        return ssh_argv(host, f"{prefix}tail -F -n {n} {shlex.quote(path)}")
+    prep = (lambda: p.prepare_for(host)) if hasattr(p, "prepare_for") else None
+    await follow_command(engine, build, p, f"{host}:{path}", key=f"file:{host}:{path}", cursor_of=time_cursor,
+                         resume="time", prepare=prep)
 
 
-async def backfill_journal(engine: RainEngine, hours: float, host: str | None = None) -> int:
-    """Load the last `hours` of a journal (local, or over ssh) into history so a timeline has something
-    to play right after a restart. History only: nothing is displayed and no burst alerts fire."""
-    if hours <= 0 or engine.history is None:
-        return 0
-    since = f"{hours:g} hours ago"
-    argv = (ssh_argv(host, f"journalctl --since {shlex.quote(since)} -o json --no-pager")
-            if host else ["journalctl", "--since", since, "-o", "json", "--no-pager"])
-    n = 0
-    proc = None
+# -- collector: a daemon on the watched host that keeps the record (alm_collector.py) --------------------------
+
+COLLECTOR_CMD = "python3 ~/alm-collector/alm_collector.py"
+COLLECTOR_CURSOR = re.compile(r'"c":"([^"]+)"')
+
+
+def parse_collector(line: str):
+    """One collector line -> (level, source, message, epoch), HistoryOnly for a folded asset, None for a heartbeat."""
     try:
-        proc = await asyncio.create_subprocess_exec(
-            *argv, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL, limit=1 << 20)
-        assert proc.stdout is not None
-        async for raw in proc.stdout:
-            rec = parse_journal(raw.decode("utf-8", "replace"))
-            if rec:
-                engine.record(*rec)
-                n += 1
-        await proc.wait()
-    except OSError:
-        pass
-    finally:
-        await asyncio.shield(_reap(proc))
-    return n
+        d = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(d, dict) or "m" not in d:
+        return None
+    rec = (d.get("l", "info"), str(d.get("o", "?")), str(d["m"]), d.get("t"))
+    return HistoryOnly(rec) if d.get("q") else rec
+
+
+def collector_cursor(text: str, rec) -> str | None:
+    m = COLLECTOR_CURSOR.search(text)
+    return m.group(1) if m else None
+
+
+STALE_S = 60.0
+
+
+class CollectorWatch:
+    """parse_collector plus a check on the heartbeats: the stream keeps running when the collector daemon is
+    dead (it only reads the store), so a heartbeat whose liveness age is stale means nothing is being collected."""
+
+    def __init__(self, engine, label: str) -> None:
+        self.engine, self.label, self.stale = engine, label, False
+
+    def __call__(self, line: str):
+        rec = parse_collector(line)
+        if rec is None and '"hb"' in line:
+            try:
+                d = json.loads(line)
+            except ValueError:
+                return None
+            if "age" not in d:               # an older collector that does not report liveness
+                return None
+            age = d["age"]
+            stale = age is None or age > STALE_S
+            if stale and not self.stale:
+                self.engine.ingest("warn", "alm", f"collector on {self.label} is not collecting")
+            elif self.stale and not stale:
+                self.engine.ingest("info", "alm", f"collector on {self.label} is collecting again")
+            self.stale = stale
+        return rec
+
+
+async def tail_collector(engine: RainEngine, host: str | None, backfill_hours: float = 24,
+                         cmd: str = COLLECTOR_CMD) -> None:
+    """Sync from a collector: everything it stored after our cursor (or the last `backfill_hours` on the
+    first run), then follow. One ssh channel carries the lot. `host` None runs it locally (tests)."""
+    watch = CollectorWatch(engine, host or "local")
+
+    def build(cur: str | None) -> list[str]:
+        since = max(0.0, time.time() - backfill_hours * 3600) if backfill_hours > 0 else time.time()
+        remote = f"{cmd} stream --after {shlex.quote(cur or '')} --since {since:.0f}"
+        return ssh_argv(host, remote) if host else ["sh", "-c", "exec " + remote]
+    await follow_command(engine, build, watch, f"{host or 'local'} collector",
+                         key=f"collector:{host or 'local'}", cursor_of=collector_cursor)
