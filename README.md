@@ -1,20 +1,54 @@
 # ALM: ambient log monitor
 
-Log entries drift right to left across a dedicated screen, like digital rain you can read. One headless engine owns all state; a terminal UI, a browser UI and a Chromebook screensaver extension are thin clients. Point it at a server and glance at it: a scanner hammering sshd, a ban, a deploy, a burst of 500s.
+![Log entries drifting right to left across a dark screen: green info, amber warnings, red errors](docs/img/hero.gif)
 
-**Documentation map:** `ARCHITECTURE.md` (how it is built; start here to change code), `OPERATIONS.md` (install details, commands, troubleshooting), `DESIGN.md` (product spec), `TODO.md` (open work).
+Your logs, as ambient rain you can read. Entries drift right to left across a dedicated screen (a spare monitor, a tablet, a Chromebook screensaver) so a glance tells you whether your server is calm or under attack: a scanner hammering sshd, a ban landing, a deploy going sideways, a burst of 500s. Quiet traffic fades by; warnings and errors stand out. Touch one and it explains itself.
+
+- **Glanceable.** Info drifts, warn glows amber, error burns orange-red. Floods are sampled, so the screen stays readable, and a repeat offender is raised as one loud entry instead of a thousand lines.
+- **Self-explaining.** Tap any entry for what it is and why it is there, in plain language, from a shipped catalogue of about 200 kinds of log line.
+- **Never misses a thing.** The record lives on your server. Close the laptop for the night, and the morning replay still has every event.
+- **Replay on demand.** Play back the last 5 minutes to 24 hours as a short reel, with a little clock that glitches away at the end.
+- **Small.** Python, one process, SQLite, one HTML file. Reads journald, log files, fail2ban and Caddy over ssh.
 
 ## Quick start
 
-Needs Linux (or ChromeOS with Linux), Python 3.10+, and nothing else.
+Needs Linux (or ChromeOS with Linux), Python 3.10+, and nothing else. No server required to try it:
 
 ```
 git clone <this repo> alm && cd alm
 ./install.sh                                   # creates .venv and installs dependencies; changes nothing else
-.venv/bin/python main.py --web-only            # demo data; open http://localhost:8000/
+.venv/bin/python main.py --demo --web-only     # invented traffic plus a day of history; open http://localhost:8000/
 ```
 
-`.venv/bin/python main.py` (no flags) is the terminal view of the same demo. `./install.sh --check` diagnoses an install.
+`--demo` never reads or writes your real logs or history. Drop `--web-only` for the terminal view of the same thing. `./install.sh --check` diagnoses an install.
+
+## A tour
+
+**Watch.** Green is routine, amber is a warning, orange-red is an error. Entries enter on the right and leave on the left at a steady pace; the header filters by level.
+
+![The live view at full size](docs/img/hero.png)
+
+**Inspect.** Tap an entry and it stops. The panel says what kind of line it is and why it is there, with this entry's address and path filled in. Tap outside or press Escape to let it drift on.
+
+![An entry caught, with its explanation](docs/img/detail.png)
+
+![The explanation, zoomed](docs/img/detail-zoom.png)
+
+**Replay.** The faint `TIMELINE` toggle at the lower right opens window keys (5m, 30m, 1h, 6h, 12h, 24h) and Pause. A window plays back as a digest, errors first, with amber `REPLAY` tags on every entry. Pause holds the screen; resume catches you up on everything that arrived.
+
+![The timeline controls](docs/img/timeline-zoom.png)
+
+![A 30-minute replay playing through, ending with the clock glitching away](docs/img/replay.gif)
+
+The playback clock shows when each entry actually happened, how far through the window it is, and how many entries the digest skipped.
+
+![The playback clock, zoomed](docs/img/clock-zoom.png)
+
+When the last replayed entry has drifted off, the clock breaks up and is gone:
+
+![The clock glitching away, zoomed](docs/img/glitch.gif)
+
+All of this media is generated from the demo data by `tools/screenshots.py` (see "Regenerating the media" below), so nothing in it is a real address.
 
 ## Watch something real
 
@@ -122,5 +156,17 @@ ChromeOS has no API to replace its built-in screensaver, so the extension opens 
 ```
 Engine (fake clock), parsers, a real browser against a real server, and the extension loaded into real Chromium. Real `chrome.idle` transitions are simulated through the extension's message hook.
 
+## Regenerating the media
+
+The pictures and GIFs at the top of this file come from `tools/screenshots.py`, so they can be redone after any UI change with one command and cannot leak anything real:
+
+```
+./install.sh --dev && .venv/bin/playwright install chromium     # once
+.venv/bin/python tools/screenshots.py                           # about four minutes, writes docs/img/
+.venv/bin/python tools/screenshots.py --only hero,detail        # just some of them (hero, detail, replay)
+```
+
+It starts `main.py --demo` (invented data from `demo.py`, seeded so every run looks the same) in memory, drives it with headless Chromium, and checks the page text before every capture: any IP address outside the documentation ranges, or a name on its denylist, aborts the run. Look at the images before committing them. To change what the demo shows, edit the scenarios in `demo.py` (a day of baseline noise plus three incidents); to add a capture, add a step to `main_async` in `tools/screenshots.py`. The replay is recorded in real time, which is why the run is slow.
+
 ## Layout
-`rain_engine.py` state and lifecycle, `rain_web.py` FastAPI and WebSocket, `rain_tui.py` terminal client, `web/index.html` browser client, `tail.py` file and journald sources, `extension/` Chromebook saver, `alm_collector.py` the collector that runs on the watched host, `install.sh` and `deploy/` (service units, settings example, collector installer), `tools/doctor.py` the diagnostics.
+`rain_engine.py` state and lifecycle, `demo.py` invented data for `--demo` and the media, `tools/screenshots.py` the media generator, `rain_web.py` FastAPI and WebSocket, `rain_tui.py` terminal client, `web/index.html` browser client, `tail.py` file and journald sources, `extension/` Chromebook saver, `alm_collector.py` the collector that runs on the watched host, `install.sh` and `deploy/` (service units, settings example, collector installer), `tools/doctor.py` the diagnostics.
