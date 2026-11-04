@@ -1,12 +1,12 @@
-# ALM collector on the watched host (user unit; needs `loginctl enable-linger` so it runs without a login).
-# Install with deploy/install-collector.sh HOST.
+# ALM collector on the watched host, as a systemd user service (needs `loginctl enable-linger` there so it
+# runs without a login). Do not edit by hand: deploy/install-collector.sh fills in the python path and
+# the sources it follows, and installs it to ~/.config/systemd/user/alm-collector.service on the host.
 [Unit]
 Description=ALM collector (keeps the record for ALM screens)
 After=network-online.target
 
 [Service]
-# --file lines: add or drop files as the host needs. `:sudo` reads through `sudo -n tail` (Caddy's log is caddy:caddy 640).
-ExecStart=/usr/bin/python3 %h/alm-collector/alm_collector.py run --file /var/log/fail2ban.log:fail2ban --file /var/log/caddy/access.log:caddy:sudo
+ExecStart=@PYTHON@ %h/alm-collector/alm_collector.py run @ARGS@
 Restart=always
 RestartSec=5
 # kill the tail/journalctl children with the service

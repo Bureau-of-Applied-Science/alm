@@ -1,19 +1,20 @@
-# systemd --user unit. Install:
-#   mkdir -p ~/.config/systemd/user && cp deploy/alm.service ~/.config/systemd/user/
-#   systemctl --user daemon-reload && systemctl --user enable --now alm
-#   loginctl enable-linger $USER     # keep it running when you are logged out
-# Edit WorkingDirectory and the log sources below. `--journal` needs membership of the
-# systemd-journal (or adm) group to see system logs; without it you only get your user journal.
+# ALM as a systemd user service. Do not edit by hand: ./install.sh --service renders this with your
+# checkout path and installs it to ~/.config/systemd/user/alm.service.
+# What it watches comes from ~/.config/alm/alm.env (see deploy/alm.env.example), so no host or secret lives here.
 [Unit]
 Description=ALM ambient log monitor
-After=network.target
+After=network-online.target
 
 [Service]
-WorkingDirectory=%h/alm
-EnvironmentFile=-%h/.config/alm.env
-ExecStart=%h/alm/.venv/bin/python main.py --web-only --journal
+WorkingDirectory=@REPO@
+EnvironmentFile=-%h/.config/alm/alm.env
+# $ALM_ARGS is word-split by systemd; main.py also reads ALM_COLLECTOR and ALM_TOKEN itself
+ExecStart=@REPO@/.venv/bin/python main.py --web-only --port 8000 $ALM_ARGS
 Restart=on-failure
 RestartSec=3
+TimeoutStopSec=10
+# ssh children die with the service, even after a hard kill
+KillMode=control-group
 
 [Install]
 WantedBy=default.target
