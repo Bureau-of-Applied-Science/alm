@@ -61,7 +61,7 @@ Key facts:
 | `main.py` | ~100 | CLI flags; wires sources, engine, web server and TUI into one asyncio loop. |
 | `web/index.html` | ~780 | The whole browser client (CSS + JS in one file): lanes, rendering, catch UI, timeline clock, screensaver behavior, desk events, auto-reconnect. |
 | `extension/` | | Chrome MV3 extension: `manifest.json`, `background.js` (service worker), `options.html` + `options.js`. |
-| `deploy/` | | systemd user units: `alm-crostini.service` (the live one), `alm.service` (generic). |
+| `install.sh`, `deploy/`, `tools/doctor.py` | | first-run experience: `install.sh` (venv, `--service`, `--check`, `--uninstall`), `deploy/alm.service` and `alm-collector.service` (unit templates rendered by the installers), `alm.env.example`, `install-collector.sh`; `doctor.py` read-only diagnostics. |
 | `tools/fake_log.py` | | Writes a slowly evolving fake log for demos (`--tail`). |
 | `tools/explain.py` | ~75 | `todo` / `import` / `export` for the explanation catalogue (section 12). |
 | `knowledge/explanations.json` | | The committed copy of the explanations stored in `history.db` (193 kinds at 2026-10-30). |
@@ -264,6 +264,7 @@ While the saver is up the page reports `opened` (first websocket open), `input` 
 | `test_history.py`, `test_burst.py` | store semantics (including the row cap); burst thresholds |
 | `test_explain.py` | entry signatures, placeholder fill, lookup, the shipped catalogue is complete |
 | `test_tail.py` | all parsers (including Caddy access sentences and Caddy's own service log), followers, cursor sync, child reaping |
+| `test_install.py` | `install.sh` (sandboxed HOME and a fake `systemctl`), the collector installer dry run, doctor parsing, env-driven collector choice |
 | `test_collector.py` | collector store/stream/burst, client parse, an end-to-end collector plus client over a real file |
 | `test_tui.py` | Textual pilot |
 | `test_browser.py` | `Server` fixture (real uvicorn on a free port, `--no-history` by default, optional `db`); caught-on-connect, reconnect, token |

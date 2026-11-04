@@ -72,7 +72,7 @@ Last updated 2026-10-30 (end of the rename / house-style / explanations session)
 - [ ] Fluent Forward / OTLP / `/ingest` HTTP endpoint: not started; ssh tailing covers current needs.
 
 ## Done
-- Systemd user service `alm` installed and enabled on the Chromebook (`deploy/alm-crostini.service`); linger on.
+- Systemd user service `alm` installed and enabled on the Chromebook (`./install.sh --service`); linger on.
 - Digest fairness, stranded-catch fix (catch ownership + TTL), extension activity log, desk events, extension on/off.
 - Engine, TUI, web, shared-state events (reference build).
 - Caught-on-connect fix (snapshot freezes caught and dismissing streams); one-caught-at-a-time in the engine; HTML escaping of log text.

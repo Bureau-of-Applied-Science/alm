@@ -1,33 +1,63 @@
 # ALM: ambient log monitor
 
-Log entries drift right to left across a dedicated screen. One headless engine owns all state; a terminal UI, a browser UI and a Chromebook screensaver extension are thin clients. 
-**Documentation map:** `ARCHITECTURE.md` (start here) (how it is built), `OPERATIONS.md` (live install, commands, troubleshooting), `DESIGN.md` (product spec), `TODO.md` (open work).
+Log entries drift right to left across a dedicated screen, like digital rain you can read. One headless engine owns all state; a terminal UI, a browser UI and a Chromebook screensaver extension are thin clients. Point it at a server and glance at it: a scanner hammering sshd, a ban, a deploy, a burst of 500s.
 
-## Setup (Linux)
+**Documentation map:** `ARCHITECTURE.md` (how it is built; start here to change code), `OPERATIONS.md` (install details, commands, troubleshooting), `DESIGN.md` (product spec), `TODO.md` (open work).
 
-```
-python3 -m venv .venv || python3 -m venv --without-pip .venv   # Debian without python3-venv:
-# then: curl -fsSL https://bootstrap.pypa.io/get-pip.py | .venv/bin/python
-.venv/bin/pip install -r requirements.txt
-```
+## Quick start
 
-## Run
+Needs Linux (or ChromeOS with Linux), Python 3.10+, and nothing else.
 
 ```
-.venv/bin/python main.py                          # TUI + web on 127.0.0.1:8000, mock data
-.venv/bin/python main.py --web-only --journal     # real data: journald
-.venv/bin/python main.py --web-only --tail /var/log/app.log --tail /var/log/other.log
-.venv/bin/python main.py --web-only --journal --token SECRET   # required if not on loopback
+git clone <this repo> alm && cd alm
+./install.sh                                   # creates .venv and installs dependencies; changes nothing else
+.venv/bin/python main.py --web-only            # demo data; open http://localhost:8000/
 ```
 
-### Watching a remote server over ssh
+`.venv/bin/python main.py` (no flags) is the terminal view of the same demo. `./install.sh --check` diagnoses an install.
 
-The engine runs here and follows the remote machine through `ssh` (key auth only, `BatchMode`). It reconnects with backoff and shows a `alm` warn when the link drops.
+## Watch something real
+
+| You want | Run |
+|---|---|
+| This machine's journal | `.venv/bin/python main.py --web-only --journal` |
+| Some log files | `.venv/bin/python main.py --web-only --tail /var/log/app.log --tail /var/log/other.log` |
+| A server (recommended) | install the collector on it, then point ALM at it, below |
+| A server, no install on it | `.venv/bin/python main.py --web-only --ssh myserver` (journal and fail2ban over ssh) |
+
+### A server, with the collector
+
+The collector is a small stdlib-only Python daemon that runs on the server, keeps the record there and raises burst alerts, so your screen can sleep, restart or be a new machine and still show everything it missed. Your screen is only a viewer.
+
+```
+ssh-copy-id myserver                            # key auth is required; ALM never prompts for a password
+deploy/install-collector.sh myserver --dry-run  # see what it will detect and install
+deploy/install-collector.sh myserver            # installs a user service on the server (undo with --remove)
+./install.sh --service --collector myserver     # run ALM here as a service that syncs from it
+./install.sh --check                            # confirms the chain: ssh, collector, web page
+```
+
+The collector finds `/var/log/fail2ban.log` and Caddy's logs by itself; pass `--file PATH:PARSER[:sudo]` for others (parsers `caddy`, `fail2ban`, `plain`; `:sudo` reads a root-only file through `sudo -n tail`). The server needs Python 3.10+ and `loginctl enable-linger` for its user.
+
+### Settings
+
+The service reads `~/.config/alm/alm.env` (created from `deploy/alm.env.example`, mode 600, never overwritten):
+
+```
+ALM_COLLECTOR=myserver        # ssh alias of the server running the collector
+ALM_ARGS=--journal            # extra main.py flags for sources that need no collector
+ALM_TOKEN=change-me           # required if you listen beyond localhost
+```
+
+Hosts and secrets live only there, not in the unit file or the repo. Restart after editing: `systemctl --user restart alm`.
+
+### Watching a remote server directly over ssh
+
+Without a collector the engine runs here and follows the remote machine through `ssh` (key auth only, `BatchMode`). It resumes from a stored cursor after every drop, sleep or restart, and shows an `alm` warn while the link is down. The server rate-limiting new logins is why all ssh to a host shares one connection.
 
 ```
 .venv/bin/python main.py --ssh myserver
 .venv/bin/python main.py --ssh myserver --ssh-file myserver:/var/log/caddy/access.log:caddy:sudo
-.venv/bin/python main.py --collector myserver     # preferred: sync from the collector on the host (deploy/install-collector.sh myserver)
 ```
 
 - `--ssh HOST` follows the remote journal (sshd, kernel firewall, services) plus `/var/log/fail2ban.log`. Needs a user in `adm` or `systemd-journal`.
@@ -64,8 +94,8 @@ Built: engine, TUI, web, ingestion (files, journald, ssh), burst detector, syste
 
 ChromeOS has no API to replace its built-in screensaver, so the extension opens a fullscreen ALM window when the device goes idle and holds the display awake (`chrome.power`) until you return.
 
-1. Run the engine on an always-on host (so ChromeOS or Crostini sleeping cannot stop ingestion), bound to loopback.
-2. Reach it from the Chromebook, e.g. from Crostini: `ssh -N -L 8000:127.0.0.1:8000 you@host`. ChromeOS forwards Crostini ports to `localhost`.
+1. Easiest: run ALM in the Chromebook's Linux container as a service (`./install.sh --service --collector myserver`), with the collector on your server keeping the record, so a sleeping Chromebook misses nothing. Alternatively run the engine on an always-on host, bound to loopback.
+2. Crostini forwards the container's port 8000 to ChromeOS `localhost`, so nothing else is needed. If the engine runs on another host: `ssh -N -L 8000:127.0.0.1:8000 you@host`.
 3. In ChromeOS Chrome: `chrome://extensions`, Developer mode, Load unpacked, and pick `extension/` from "Linux files" (code > alm > extension). If the picker cannot read it, copy the folder into "My files" first. Unverified which is needed.
 4. After pulling changes, reload the extension (`chrome://extensions`, the circular arrow on its card); Chrome does not do it for you. The options page title shows the version (v0.2.0 or later closes only on an edge swipe, Escape or lock; v0.1.x closed on any touch).
 5. If the saver closes when it should not, open the options page and read **Recent activity** (v0.3.0+). Every open and close is logged with its reason: `closed by us: page asked {edge-swipe ...}` (a touch landed in an edge zone; coordinates, viewport and pixel ratio are included), `page asked {escape}`, `screen locked`, or `closed EXTERNALLY` (the OS or something else closed the window). Page-side breadcrumbs (`page: pointerdown`, `pagehide`, `blur`, `fullscreenchange`) precede it.
@@ -87,10 +117,10 @@ ChromeOS has no API to replace its built-in screensaver, so the extension opens 
 ## Tests
 
 ```
-.venv/bin/pip install pytest pytest-asyncio httpx playwright && .venv/bin/playwright install chromium
+./install.sh --dev && .venv/bin/playwright install chromium
 .venv/bin/pytest
 ```
 Engine (fake clock), parsers, a real browser against a real server, and the extension loaded into real Chromium. Real `chrome.idle` transitions are simulated through the extension's message hook.
 
 ## Layout
-`rain_engine.py` state and lifecycle, `rain_web.py` FastAPI and WebSocket, `rain_tui.py` terminal client, `web/index.html` browser client, `tail.py` file and journald sources, `extension/` Chromebook saver, `deploy/spot.service` systemd user unit.
+`rain_engine.py` state and lifecycle, `rain_web.py` FastAPI and WebSocket, `rain_tui.py` terminal client, `web/index.html` browser client, `tail.py` file and journald sources, `extension/` Chromebook saver, `alm_collector.py` the collector that runs on the watched host, `install.sh` and `deploy/` (service units, settings example, collector installer), `tools/doctor.py` the diagnostics.

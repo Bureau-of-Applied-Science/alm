@@ -9,7 +9,7 @@ How the live install is set up, how to run things, and how to debug. For how the
 | Host | Chromebook, Crostini container (Debian 12, x86_64) |
 | Code | `~/code/alm` (git checkout) |
 | Python | `.venv/` in the repo (created with `venv --without-pip` + get-pip because `python3-venv` is missing) |
-| Service | systemd **user** unit `alm`, installed from `deploy/alm-crostini.service` to `~/.config/systemd/user/alm.service`; enabled; user linger is on, so it survives logout |
+| Service | systemd **user** unit `alm`, installed by `./install.sh --service` (renders `deploy/alm.service` to `~/.config/systemd/user/alm.service`); enabled; user linger is on, so it survives logout |
 | Command | `main.py --web-only --port 8000`; the host and token come from `~/.config/alm/alm.env` (`ALM_COLLECTOR=myserver`, optional `ALM_TOKEN`, mode 600). Without a collector: `--ssh myserver --ssh-file myserver:/var/log/caddy/access.log:caddy:sudo` |
 | URL | `http://localhost:8000/` (Crostini forwards the port to ChromeOS); screensaver view `http://localhost:8000/?screensaver=1` |
 | History | `~/.local/share/alm/history.db` (SQLite, WAL, 7 days, capped at 5M rows (`--max-rows`)) |
@@ -29,12 +29,7 @@ curl -s http://localhost:8000/api/state | head -c 400               # snapshot (
 .venv/bin/pytest tests/test_engine.py tests/test_playback.py -q     # fast logic tests
 ```
 
-Reinstalling the unit after editing `deploy/alm-crostini.service`:
-
-```
-cp deploy/alm-crostini.service ~/.config/systemd/user/alm.service
-systemctl --user daemon-reload && systemctl --user restart alm
-```
+Reinstalling the unit after editing `deploy/alm.service` (the template; `@REPO@` is filled in by the installer): `./install.sh --service` (add `--no-start` to only write it). Settings edits need only `systemctl --user restart alm`. `./install.sh --check` diagnoses the chain, and `./install.sh --uninstall` removes the unit and keeps your data.
 
 Systemd unit gotcha: comments must be on their own line (a trailing `# ...` after a setting is invalid). `KillMode=control-group` is deliberate: it kills the `ssh ... tail` children with the service, even after a hard kill.
 
