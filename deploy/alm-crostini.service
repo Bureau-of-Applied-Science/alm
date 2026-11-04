@@ -1,15 +1,19 @@
-# Chromebook (Crostini) instance: engine here, reading myserver over ssh, served on localhost:8000
+# Chromebook (Crostini) instance: engine here, syncing from a collector on your server, served on localhost:8000
 # (Crostini forwards the port to ChromeOS localhost). Install:
 #   mkdir -p ~/.config/systemd/user && cp deploy/alm-crostini.service ~/.config/systemd/user/alm.service
 #   systemctl --user daemon-reload && systemctl --user enable --now alm
-# Stop the hand-started instance first. Linger is already on for this user.
+# Stop the hand-started instance first. Needs `loginctl enable-linger` to survive logout.
+# Your host and secrets live in ~/.config/alm/alm.env (chmod 600), never in this file:
+#   ALM_COLLECTOR=myserver        # ssh alias of the host running alm_collector.py (deploy/install-collector.sh)
+#   ALM_TOKEN=...                 # only if you bind beyond loopback
 [Unit]
-Description=ALM ambient log monitor (myserver over ssh)
+Description=ALM ambient log monitor
 After=network-online.target
 
 [Service]
 WorkingDirectory=%h/code/alm
-ExecStart=%h/code/alm/.venv/bin/python main.py --web-only --port 8000 --ssh myserver --ssh-file myserver:/var/log/caddy/access.log:caddy:sudo
+EnvironmentFile=-%h/.config/alm/alm.env
+ExecStart=%h/code/alm/.venv/bin/python main.py --web-only --port 8000
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=10

@@ -20,7 +20,7 @@ import uvicorn
 
 from rain_engine import RainEngine
 from history import History
-from tail import (FILE_PARSERS, backfill_journal, tail_file, tail_journal, tail_ssh_file,
+from tail import (COLLECTOR_CMD, FILE_PARSERS, tail_collector, tail_file, tail_journal, tail_ssh_file,
                   tail_ssh_journal)
 from rain_tui import LogRainApp
 from rain_web import create_app
@@ -35,18 +35,22 @@ def default_db() -> str:
 
 async def run(host: str, port: int, use_web: bool, use_tui: bool, tails: list[str],
               journal: bool, token: str | None, ssh_hosts: list[str], ssh_files: list[str],
-              history: History | None = None, backfill_hours: float = 0) -> None:
-    real = bool(tails or journal or ssh_hosts or ssh_files)
+              history: History | None = None, backfill_hours: float = 0,
+              collectors: list[str] | None = None, collector_cmd: str = COLLECTOR_CMD) -> None:
+    collectors = collectors or []
+    real = bool(tails or journal or ssh_hosts or ssh_files or collectors)
     engine = RainEngine(mock=not real, history=history if real else None)
+    if collectors:
+        engine.local_bursts = False      # the collector raises the alerts, and they arrive as entries
     await engine.start()
+    for chost in collectors:
+        asyncio.create_task(tail_collector(engine, chost, backfill_hours, collector_cmd))
     for path in tails:
         asyncio.create_task(tail_file(engine, path))
     if journal:
-        asyncio.create_task(tail_journal(engine))
-        asyncio.create_task(backfill_journal(engine, backfill_hours))
+        asyncio.create_task(tail_journal(engine, backfill_hours=backfill_hours))
     for remote in ssh_hosts:     # preset: remote journal (sshd, kernel firewall, services) + fail2ban
-        asyncio.create_task(tail_ssh_journal(engine, remote))
-        asyncio.create_task(backfill_journal(engine, backfill_hours, remote))
+        asyncio.create_task(tail_ssh_journal(engine, remote, backfill_hours))
         asyncio.create_task(tail_ssh_file(engine, remote, "/var/log/fail2ban.log", "fail2ban"))
     for spec in ssh_files:       # host:path:parser[:sudo]
         remote, path, parser, *rest = spec.split(":")
@@ -91,11 +95,18 @@ if __name__ == "__main__":
     parser.add_argument("--max-rows", type=int, default=5_000_000,
                         help="history row cap, oldest dropped first (default 5000000, roughly 1.5 GB)")
     parser.add_argument("--backfill", type=float, default=24, metavar="HOURS",
-                        help="hours of journal to load into history at start (default 24, 0 disables)")
+                        help="hours of journal to load on the first run, before any sync cursor exists (default 24, 0 = start at now)")
+    parser.add_argument("--collector", action="append", default=[], metavar="HOST",
+                        help="sync from an alm collector running on HOST (repeatable; or ALM_COLLECTOR, comma separated); "
+                             "replaces --ssh for that host")
+    parser.add_argument("--collector-cmd", default=os.environ.get("ALM_COLLECTOR_CMD") or COLLECTOR_CMD,
+                        help="command that starts the collector on the host (default: %(default)s)")
     parser.add_argument("--journal", action="store_true", help="ingest from journald (journalctl -f)")
     parser.add_argument("--token", default=os.environ.get("ALM_TOKEN") or os.environ.get("SPOT_TOKEN"),
                         help="shared secret required on /ws and /api/state (or ALM_TOKEN)")
     args = parser.parse_args()
+    if not args.collector and os.environ.get("ALM_COLLECTOR"):
+        args.collector = [h.strip() for h in os.environ["ALM_COLLECTOR"].split(",") if h.strip()]
 
     if args.host not in ("127.0.0.1", "localhost", "::1") and not args.token:
         print("WARNING: listening on a non-loopback address without --token; anyone who can reach "
@@ -105,4 +116,4 @@ if __name__ == "__main__":
                     tails=args.tail, journal=args.journal, token=args.token,
                     ssh_hosts=args.ssh, ssh_files=args.ssh_file,
                     history=None if args.no_history else History(args.db, args.keep_days * 86400, args.max_rows),
-                    backfill_hours=args.backfill))
+                    backfill_hours=args.backfill, collectors=args.collector, collector_cmd=args.collector_cmd))

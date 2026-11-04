@@ -1,0 +1,16 @@
+# ALM collector on the watched host (user unit; needs `loginctl enable-linger` so it runs without a login).
+# Install with deploy/install-collector.sh HOST.
+[Unit]
+Description=ALM collector (keeps the record for ALM screens)
+After=network-online.target
+
+[Service]
+# --file lines: add or drop files as the host needs. `:sudo` reads through `sudo -n tail` (Caddy's log is caddy:caddy 640).
+ExecStart=/usr/bin/python3 %h/alm-collector/alm_collector.py run --file /var/log/fail2ban.log:fail2ban --file /var/log/caddy/access.log:caddy:sudo
+Restart=always
+RestartSec=5
+# kill the tail/journalctl children with the service
+KillMode=control-group
+
+[Install]
+WantedBy=default.target
