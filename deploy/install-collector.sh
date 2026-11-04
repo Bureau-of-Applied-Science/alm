@@ -34,7 +34,7 @@ die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # and a script that logs in a dozen times in a few seconds gets refused ("Connection closed").
 ctl=$(mktemp -d "${TMPDIR:-/tmp}/alm-ssh.XXXXXX")
 sshopts=(-o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=auto -o "ControlPath=$ctl/c" -o ControlPersist=60)
-trap 'ssh -O exit "${sshopts[@]}" "$host" 2>/dev/null; rm -rf "$ctl"' EXIT
+trap 'ssh -O exit "${sshopts[@]}" "$host" 2>/dev/null || true; rm -rf "$ctl"' EXIT
 rssh() { ssh -T "${sshopts[@]}" "$host" "$@"; }
 
 if [ $remove = 1 ]; then
