@@ -30,7 +30,12 @@ while [ $# -gt 0 ]; do
   shift
 done
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
-rssh() { ssh -T -o BatchMode=yes -o ConnectTimeout=10 "$host" "$@"; }
+# One shared connection for every step: servers commonly rate-limit new ssh logins (ufw LIMIT, MaxStartups),
+# and a script that logs in a dozen times in a few seconds gets refused ("Connection closed").
+ctl=$(mktemp -d "${TMPDIR:-/tmp}/alm-ssh.XXXXXX")
+sshopts=(-o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=auto -o "ControlPath=$ctl/c" -o ControlPersist=60)
+trap 'ssh -O exit "${sshopts[@]}" "$host" 2>/dev/null; rm -rf "$ctl"' EXIT
+rssh() { ssh -T "${sshopts[@]}" "$host" "$@"; }
 
 if [ $remove = 1 ]; then
   rssh 'systemctl --user disable --now alm-collector 2>/dev/null; rm -f ~/.config/systemd/user/alm-collector.service; systemctl --user daemon-reload; echo "removed. Kept ~/alm-collector and ~/.local/share/alm-collector (the stored record); delete by hand if unwanted"'
@@ -68,7 +73,7 @@ if [ $dry = 1 ]; then
 fi
 
 rssh 'mkdir -p ~/alm-collector ~/.config/systemd/user'
-scp -q -o BatchMode=yes "$here/alm_collector.py" "$here/tail.py" "$here/burst.py" "$host:alm-collector/"
+scp -q "${sshopts[@]}" "$here/alm_collector.py" "$here/tail.py" "$here/burst.py" "$host:alm-collector/"
 printf '%s\n' "$unit" | rssh 'cat > ~/.config/systemd/user/alm-collector.service'
 rssh 'systemctl --user daemon-reload && systemctl --user enable alm-collector >/dev/null 2>&1 && systemctl --user restart alm-collector' \
   || die "could not start the service (is there a user systemd session? try: loginctl enable-linger \$USER on $host)"
