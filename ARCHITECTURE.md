@@ -62,6 +62,8 @@ Key facts:
 | `web/index.html` | ~780 | The whole browser client (CSS + JS in one file): lanes, rendering, catch UI, timeline clock, screensaver behavior, desk events, auto-reconnect. |
 | `extension/` | | Chrome MV3 extension: `manifest.json`, `background.js` (service worker), `options.html` + `options.js`. |
 | `install.sh`, `deploy/`, `tools/doctor.py` | | first-run experience: `install.sh` (venv, `--service`, `--check`, `--uninstall`), `deploy/alm.service` and `alm-collector.service` (unit templates rendered by the installers), `alm.env.example`, `install-collector.sh`; `doctor.py` read-only diagnostics. |
+| `demo.py` | | Invented data for `main.py --demo` and the README media: `seed()` writes a day of history (baseline plus three incidents) into an in-memory `History`, `feed()` drips live entries. Documentation-range addresses only, seeded RNG, entry shapes identical to the real parsers, every signature covered by the shipped explanations (tested). |
+| `tools/screenshots.py` | | Regenerates `docs/img/` (stills and GIFs) by driving `--demo` with headless Chromium. Sanitizes the page text before every capture (IPs outside RFC 5737/3849, denylisted words). See README "Regenerating the media". |
 | `tools/fake_log.py` | | Writes a slowly evolving fake log for demos (`--tail`). |
 | `tools/explain.py` | ~75 | `todo` / `import` / `export` for the explanation catalogue (section 12). |
 | `knowledge/explanations.json` | | The committed copy of the explanations stored in `history.db` (193 kinds at 2026-10-30). |
@@ -264,6 +266,7 @@ While the saver is up the page reports `opened` (first websocket open), `input` 
 | `test_history.py`, `test_burst.py` | store semantics (including the row cap); burst thresholds |
 | `test_explain.py` | entry signatures, placeholder fill, lookup, the shipped catalogue is complete |
 | `test_tail.py` | all parsers (including Caddy access sentences and Caddy's own service log), followers, cursor sync, child reaping |
+| `test_demo.py`, `test_screenshots.py` | demo data (deterministic, documentation addresses only, fully explained); the media pipeline's sanitizer and GIF assembly (the capture itself is run by hand) |
 | `test_install.py` | `install.sh` (sandboxed HOME and a fake `systemctl`), the collector installer dry run, doctor parsing, env-driven collector choice |
 | `test_collector.py` | collector store/stream/burst, client parse, an end-to-end collector plus client over a real file |
 | `test_tui.py` | Textual pilot |
