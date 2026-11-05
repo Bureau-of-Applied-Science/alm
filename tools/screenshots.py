@@ -4,7 +4,7 @@
     .venv/bin/python tools/screenshots.py [--out docs/img] [--only hero,detail,...]
 
 Starts `main.py --demo` (invented data, in memory) on a free port, drives it with headless Chromium
-(Playwright), and writes stills and GIFs. Every capture first checks the page text: any IP address outside the
+(Playwright), and writes stills and animations (WebP). Every capture first checks the page text: any IP address outside the
 documentation ranges (RFC 5737, RFC 3849), or any word on the denylist, aborts the run, so the images are
 sanitized by construction. Needs `./install.sh --dev` and `playwright install chromium`. Takes about three minutes
 (the replay is captured in real time).
@@ -67,32 +67,32 @@ async def page_text(page) -> str:
     return await page.evaluate("document.body.innerText + ' ' + (document.getElementById('detailPanel')||{}).innerText")
 
 
-def quantize(img: Image.Image, colors: int = 96) -> Image.Image:
-    return img.convert("RGB").quantize(colors=colors, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-
-
-def save_png(img: Image.Image, path: Path, width: int | None = None) -> None:
+def save_still(img: Image.Image, path: Path, width: int | None = None, quality: int = 85) -> None:
+    """Lossy WebP: about a sixth of the size of an optimised PNG on this dark, text-heavy UI."""
     if width and img.width > width:
         img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
-    img.convert("RGB").quantize(colors=200, method=Image.Quantize.MEDIANCUT).save(path, optimize=True)
+    img.convert("RGB").save(path, "WEBP", quality=quality, method=6)
     print(f"  {shown(path)}  {path.stat().st_size // 1024} KB  {img.width}x{img.height}")
 
 
-def save_gif(frames: list[tuple[float, Image.Image]], path: Path, width: int, max_fps: float = 12,
-             colors: int = 96, loop_pause: float = 1.2) -> None:
-    """frames: (timestamp, image). Drops frames closer than 1/max_fps, scales to `width`, keeps real timing."""
+def save_anim(frames: list[tuple[float, Image.Image]], path: Path, width: int, max_fps: float = 10,
+              quality: int = 75, loop_pause: float = 1.2) -> float:
+    """Animated WebP from (timestamp, image) frames: real timing, frames closer than 1/max_fps dropped,
+    scaled to `width`. Lossy WebP is 5 to 7 times smaller than a GIF of the same frames, and every browser
+    and GitHub's README renderer play it."""
     kept: list[tuple[float, Image.Image]] = []
     for t, im in frames:
         if not kept or t - kept[-1][0] >= 1 / max_fps:
             kept.append((t, im))
     imgs, durs = [], []
     for i, (t, im) in enumerate(kept):
-        im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
-        imgs.append(quantize(im, colors))
+        imgs.append(im.convert("RGB").resize((width, round(im.height * width / im.width)), Image.LANCZOS))
         nxt = kept[i + 1][0] if i + 1 < len(kept) else t + loop_pause
         durs.append(max(20, int((nxt - t) * 1000)))
-    imgs[0].save(path, save_all=True, append_images=imgs[1:], duration=durs, loop=0, optimize=True, disposal=1)
+    imgs[0].save(path, "WEBP", save_all=True, append_images=imgs[1:], duration=durs, loop=0, quality=quality,
+                 method=4, kmin=4, kmax=8)      # a keyframe every few frames: lossy deltas otherwise smear
     print(f"  {shown(path)}  {path.stat().st_size // 1024} KB  {len(imgs)} frames  {sum(durs) / 1000:.1f}s")
+    return sum(durs) / 1000
 
 
 class Recorder:
@@ -132,7 +132,7 @@ async def grab(page, path: Path, clip: dict | None = None, width: int | None = N
     sanitize_text(await page_text(page), label or path.name)
     png = await page.screenshot(clip=clip) if clip else await page.screenshot()
     img = Image.open(io.BytesIO(png))
-    save_png(img, path, width)
+    save_still(img, path, width)
     return img
 
 
@@ -170,13 +170,13 @@ async def main_async(out: Path, only: set[str]) -> None:
             if want("hero"):
                 print("hero")
                 await page.mouse.move(W - 4, H - 4)
-                await grab(page, out / "hero.png", width=1600, label="hero")
+                await grab(page, out / "live.webp", width=1600, label="live view")
                 rec = Recorder(page, ctx)
                 await rec.start()
                 await asyncio.sleep(7)
                 frames = await rec.stop()
                 sanitize_text(await page_text(page), "hero gif")
-                save_gif(frames, out / "hero.gif", width=900, max_fps=10, colors=80)
+                save_anim(frames, out / "hero.webp", width=900, max_fps=10)
 
             if want("detail"):
                 print("detail")
@@ -192,8 +192,8 @@ async def main_async(out: Path, only: set[str]) -> None:
                 await page.wait_for_selector("#detailPanel:not(.hidden)", timeout=5000)
                 await page.wait_for_timeout(900)
                 await page.mouse.move(W - 4, H - 4)
-                await grab(page, out / "detail.png", width=1600, label="detail view")
-                await grab(page, out / "detail-zoom.png", clip=await box(page, "#detailPanel", pad=16), label="detail panel")
+                await grab(page, out / "detail.webp", width=1600, label="detail view")
+                await grab(page, out / "detail-zoom.webp", clip=await box(page, "#detailPanel", pad=16), label="detail panel")
                 await page.keyboard.press("Escape")
                 await page.wait_for_timeout(600)
 
@@ -202,7 +202,7 @@ async def main_async(out: Path, only: set[str]) -> None:
                 await page.click("#tlLabel")
                 await page.wait_for_timeout(700)
                 await page.mouse.move(W - 4, H - 4)
-                await grab(page, out / "timeline-zoom.png", clip=await box(page, "#tlControls", pad=18), label="timeline controls")
+                await grab(page, out / "timeline-zoom.webp", clip=await box(page, "#tlControls", pad=18), label="timeline controls")
                 print("replay (about a minute, in real time) ...")
                 # Two short recordings, not one long one: a screencast of a busy page is hundreds of MB a minute.
                 rec = Recorder(page, ctx, scale=1)
@@ -211,9 +211,9 @@ async def main_async(out: Path, only: set[str]) -> None:
                 await page.wait_for_selector("#tlClock:not(.hidden)", timeout=10000)
                 await page.wait_for_timeout(9000)
                 head = await rec.stop()
-                await grab(page, out / "replay.png", width=1600, label="replay")
+                await grab(page, out / "replay-frame.webp", width=1600, label="replay")
                 clock = await box(page, "#tlClock", pad=5)
-                await grab(page, out / "clock-zoom.png", clip=clock, label="replay clock")
+                await grab(page, out / "clock-zoom.webp", clip=clock, label="replay clock")
                 await page.mouse.move(W - 4, H - 4)
                 await page.wait_for_function("document.getElementById('lampEnd').classList.contains('on')", timeout=150000, polling=100)
                 # the clock lingers until the last replayed drop has drifted off, then glitches away: start
@@ -233,13 +233,13 @@ async def main_async(out: Path, only: set[str]) -> None:
                 # keep only the last stretch before the glitch (the file would otherwise run to tens of MB)
                 lo = glitch_at - 6
                 tail = [(t - lo + head[-1][0] + 0.25, im) for t, im in frames if t >= lo]
-                save_gif(head + tail, out / "replay.gif", width=800, max_fps=8, colors=64)
+                save_anim(head + tail, out / "replay.webp", width=900, max_fps=10)
                 # the glitch alone, zoomed on the clock
                 sc = frames[0][1].width / W
                 crop = (int(clock["x"] * sc), int(clock["y"] * sc), int((clock["x"] + clock["width"]) * sc),
                         int((clock["y"] + clock["height"]) * sc))
                 g = [(t - (glitch_at - 1.4), im.crop(crop)) for t, im in frames if glitch_at - 1.4 <= t <= glitch_at + 1.3]
-                save_gif(g, out / "glitch.gif", width=560, max_fps=30, colors=64, loop_pause=1.5)
+                save_anim(g, out / "glitch.webp", width=560, max_fps=30, quality=80, loop_pause=1.5)
             await browser.close()
     finally:
         server.terminate()

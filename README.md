@@ -1,6 +1,6 @@
 # ALM: ambient log monitor
 
-![Log entries drifting right to left across a dark screen: green info, amber warnings, red errors](docs/img/hero.gif)
+![Log entries drifting right to left across a dark screen: green info, amber warnings, red errors](docs/img/hero.webp)
 
 Your logs, as ambient rain you can read. Entries drift right to left across a dedicated screen (a spare monitor, a tablet, a Chromebook screensaver) so a glance tells you whether your server is calm or under attack: a scanner hammering sshd, a ban landing, a deploy going sideways, a burst of 500s. Quiet traffic fades by; warnings and errors stand out. Touch one and it explains itself.
 
@@ -26,27 +26,27 @@ git clone <this repo> alm && cd alm
 
 **Watch.** Green is routine, amber is a warning, orange-red is an error. Entries enter on the right and leave on the left at a steady pace; the header filters by level.
 
-![The live view at full size](docs/img/hero.png)
+![The live view at full size](docs/img/live.webp)
 
 **Inspect.** Tap an entry and it stops. The panel says what kind of line it is and why it is there, with this entry's address and path filled in. Tap outside or press Escape to let it drift on.
 
-![An entry caught, with its explanation](docs/img/detail.png)
+![An entry caught, with its explanation](docs/img/detail.webp)
 
-![The explanation, zoomed](docs/img/detail-zoom.png)
+![The explanation, zoomed](docs/img/detail-zoom.webp)
 
 **Replay.** The faint `TIMELINE` toggle at the lower right opens window keys (5m, 30m, 1h, 6h, 12h, 24h) and Pause. A window plays back as a digest, errors first, with amber `REPLAY` tags on every entry. Pause holds the screen; resume catches you up on everything that arrived.
 
-![The timeline controls](docs/img/timeline-zoom.png)
+![The timeline controls](docs/img/timeline-zoom.webp)
 
-![A 30-minute replay playing through, ending with the clock glitching away](docs/img/replay.gif)
+![A 30-minute replay playing through, ending with the clock glitching away](docs/img/replay.webp)
 
 The playback clock shows when each entry actually happened, how far through the window it is, and how many entries the digest skipped.
 
-![The playback clock, zoomed](docs/img/clock-zoom.png)
+![The playback clock, zoomed](docs/img/clock-zoom.webp)
 
 When the last replayed entry has drifted off, the clock breaks up and is gone:
 
-![The clock glitching away, zoomed](docs/img/glitch.gif)
+![The clock glitching away, zoomed](docs/img/glitch.webp)
 
 All of this media is generated from the demo data by `tools/screenshots.py` (see "Regenerating the media" below), so nothing in it is a real address.
 
@@ -158,7 +158,7 @@ Engine (fake clock), parsers, a real browser against a real server, and the exte
 
 ## Regenerating the media
 
-The pictures and GIFs at the top of this file come from `tools/screenshots.py`, so they can be redone after any UI change with one command and cannot leak anything real:
+The pictures and animations at the top of this file come from `tools/screenshots.py`, so they can be redone after any UI change with one command and cannot leak anything real:
 
 ```
 ./install.sh --dev && .venv/bin/playwright install chromium     # once

@@ -1,7 +1,7 @@
 """The README media pipeline (tools/screenshots.py): the parts that must keep working between runs.
 
 The capture itself needs a browser and four minutes, so it is run by hand; these cover the sanitizer that
-guards every capture and the GIF assembly."""
+guards every capture and the WebP assembly."""
 import os
 import sys
 
@@ -36,20 +36,16 @@ def test_denylisted_words_abort_the_run(word):
         shots.sanitize_text(f"something {word} something", "x")
 
 
-def test_gif_keeps_real_timing_and_drops_frames_that_come_too_fast(tmp_path):
+def test_animation_keeps_real_timing_and_drops_frames_that_come_too_fast(tmp_path):
     frames = [(i * 0.02, Image.new("RGB", (200, 100), (i * 5 % 255, 40, 40))) for i in range(50)]   # 50 fps in
-    out = tmp_path / "x.gif"
-    shots.save_gif(frames, out, width=100, max_fps=10)
-    gif = Image.open(out)
-    assert gif.size == (100, 50) and gif.n_frames <= 12          # about one second at 10 fps, not 50 frames
-    total = 0
-    for i in range(gif.n_frames):
-        gif.seek(i)
-        total += gif.info["duration"]
-    assert 900 <= total <= 3000                                  # real duration plus the loop pause
+    out = tmp_path / "x.webp"
+    seconds = shots.save_anim(frames, out, width=100, max_fps=10)
+    im = Image.open(out)
+    assert im.size == (100, 50) and getattr(im, "is_animated", False) and im.n_frames <= 12   # about 1 s at 10 fps
+    assert 1.5 <= seconds <= 2.6                                 # real duration (1 s) plus the loop pause
 
 
-def test_png_is_palettised_and_scaled(tmp_path):
-    out = tmp_path / "x.png"
-    shots.save_png(Image.new("RGB", (3200, 1800), (10, 20, 10)), out, width=1600)
+def test_stills_are_webp_and_scaled(tmp_path):
+    out = tmp_path / "x.webp"
+    shots.save_still(Image.new("RGB", (3200, 1800), (10, 20, 10)), out, width=1600)
     assert Image.open(out).size == (1600, 900) and out.stat().st_size < 50_000
