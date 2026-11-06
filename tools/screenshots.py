@@ -173,10 +173,10 @@ async def main_async(out: Path, only: set[str]) -> None:
                 await grab(page, out / "live.webp", width=1600, label="live view")
                 rec = Recorder(page, ctx)
                 await rec.start()
-                await asyncio.sleep(7)
+                await asyncio.sleep(4.5)
                 frames = await rec.stop()
                 sanitize_text(await page_text(page), "hero gif")
-                save_anim(frames, out / "hero.webp", width=900, max_fps=10)
+                save_anim(frames, out / "hero.webp", width=900, max_fps=30, quality=70, loop_pause=0.8)
 
             if want("detail"):
                 print("detail")
